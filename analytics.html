@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - HC Project Tracker</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js with Plugins -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Custom Multi-Select Dropdown */
+        .custom-dropdown {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .dropdown-trigger {
+            background: rgba(21, 21, 34, 0.9);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            width: 100%;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dropdown-trigger::after {
+            content: '▼';
+            font-size: 10px;
+            margin-left: 8px;
+            color: white;
+        }
+
+        .checkbox-dropdown-menu {
+            display: none;
+            position: absolute;
+            background: #1e1e2d;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 10px;
+            z-index: 1000;
+            min-width: 100%;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            max-height: 300px;
+            overflow-y: auto;
+            top: 100%;
+            left: 0;
+            margin-top: 5px;
+        }
+
+        .checkbox-dropdown-menu label {
+            display: block;
+            padding: 5px;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .checkbox-dropdown-menu label:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .checkbox-dropdown-menu hr {
+            border: 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 5px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Particle Grid Background -->
+    <div class="particle-bg"></div>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="logo">
+            <i data-lucide="layout-dashboard"></i>
+            <span>HC Initiatives Tracker</span>
+        </div>
+
+        <a href="dashboard.html" class="nav-item">
+            <i data-lucide="layout-dashboard"></i> <span class="menu-text">Dashboard Overview</span>
+        </a>
+        <a href="projects.html" class="nav-item">
+            <i data-lucide="folder-kanban"></i> <span class="menu-text">Initiatives</span>
+        </a>
+        <a href="owners.html" class="nav-item">
+            <i data-lucide="users"></i> <span class="menu-text">Owners</span>
+        </a>
+        <a href="analytics.html" class="nav-item active">
+            <i data-lucide="bar-chart-2"></i> <span class="menu-text">Analytic</span>
+        </a>
+        <a href="notifications.html" class="nav-item">
+            <i data-lucide="bell"></i> <span class="menu-text">Notifications</span>
+            <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+        </a>
+        <a href="timeline.html" class="nav-item">
+            <i data-lucide="calendar"></i> <span class="menu-text">Timeline</span>
+        </a>
+        <a href="approvals.html" class="nav-item" id="approvalsLink">
+            <i data-lucide="check-circle"></i> <span class="menu-text">Approvals</span>
+            <span id="approvalsBadge" class="notification-badge" style="display: none;">0</span>
+        </a>
+        <a href="user-management.html" class="nav-item">
+            <i data-lucide="user-cog"></i> <span class="menu-text">User Management</span>
+        </a>
+        <a href="settings.html" class="nav-item">
+            <i data-lucide="settings"></i> <span class="menu-text">Setting</span>
+        </a>
+
+        <!-- Logout Button at Bottom -->
+        <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <a href="#" onclick="confirmLogout(event)" class="nav-item" style="color: #ff0055;">
+                <i data-lucide="log-out"></i> <span class="menu-text">Logout</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 10000; align-items: center; justify-content: center;">
+        <div
+            style="background: linear-gradient(135deg, rgba(21, 21, 34, 0.95), rgba(26, 31, 46, 0.95)); border-radius: 16px; max-width: 400px; width: 90%; padding: 30px; border: 1px solid rgba(255, 0, 85, 0.3); box-shadow: 0 20px 60px rgba(255, 0, 85, 0.4);">
+            <h3 style="margin: 0 0 15px 0; font-size: 20px; color: white; text-align: center;">Confirm Logout</h3>
+            <p style="margin: 0 0 25px 0; color: var(--text-muted); text-align: center;">Are you sure you want to
+                logout?</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button onclick="proceedLogout()"
+                    style="padding: 12px; background: linear-gradient(135deg, #ff0055, #ff8800); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">Yes,
+                    Logout</button>
+                <button onclick="closeLogoutModal()"
+                    style="padding: 12px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header style="margin-bottom: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                <div>
+                    <h1 class="gradient-text" style="font-size: 28px; margin-bottom: 5px;">Project Management Analytics
+                    </h1>
+                    <p style="color: var(--text-muted); font-size: 14px;">Comprehensive insights for data-driven
+                        decision making</p>
+                </div>
+            </div>
+
+            <!-- Global Filters -->
+            <div
+                style="display: flex; gap: 15px; flex-wrap: wrap; padding: 15px; background: rgba(0, 242, 234, 0.05); border-radius: 8px; border: 1px solid rgba(0, 242, 234, 0.2);">
+                <div style="flex: 1; min-width: 200px;">
+                    <label
+                        style="display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">
+                        <i data-lucide="building" style="width: 12px; display: inline; margin-right: 4px;"></i>
+                        Entitas
+                    </label>
+                    <select id="globalFilterEntity" onchange="applyGlobalFilters()"
+                        style="width: 100%; padding: 8px 12px; background: rgba(21, 21, 34, 0.9); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 13px;">
+                        <option value="">Semua Entitas</option>
+                    </select>
+                </div>
+                <div style="flex: 1; min-width: 150px;">
+                    <label
+                        style="display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">
+                        <i data-lucide="calendar" style="width: 12px; display: inline; margin-right: 4px;"></i>
+                        Bulan
+                    </label>
+
+                    <div class="custom-dropdown" id="monthDropdownContainer">
+                        <button class="dropdown-trigger" onclick="toggleMonthDropdown()" id="monthDropdownTrigger">Semua
+                            Bulan</button>
+                        <div class="checkbox-dropdown-menu" id="monthDropdownMenu">
+                            <label><input type="checkbox" value="All" onchange="toggleAllMonths(this)" checked> Semua
+                                Bulan</label>
+                            <hr>
+                            <!-- Values 0-11 correspond to JS Date.getMonth() -->
+                            <label><input type="checkbox" value="0" class="month-check" onchange="updateMonthLabel()">
+                                Januari</label>
+                            <label><input type="checkbox" value="1" class="month-check" onchange="updateMonthLabel()">
+                                Februari</label>
+                            <label><input type="checkbox" value="2" class="month-check" onchange="updateMonthLabel()">
+                                Maret</label>
+                            <label><input type="checkbox" value="3" class="month-check" onchange="updateMonthLabel()">
+                                April</label>
+                            <label><input type="checkbox" value="4" class="month-check" onchange="updateMonthLabel()">
+                                Mei</label>
+                            <label><input type="checkbox" value="5" class="month-check" onchange="updateMonthLabel()">
+                                Juni</label>
+                            <label><input type="checkbox" value="6" class="month-check" onchange="updateMonthLabel()">
+                                Juli</label>
+                            <label><input type="checkbox" value="7" class="month-check" onchange="updateMonthLabel()">
+                                Agustus</label>
+                            <label><input type="checkbox" value="8" class="month-check" onchange="updateMonthLabel()">
+                                September</label>
+                            <label><input type="checkbox" value="9" class="month-check" onchange="updateMonthLabel()">
+                                Oktober</label>
+                            <label><input type="checkbox" value="10" class="month-check" onchange="updateMonthLabel()">
+                                November</label>
+                            <label><input type="checkbox" value="11" class="month-check" onchange="updateMonthLabel()">
+                                Desember</label>
+                        </div>
+                    </div>
+                </div>
+                <div style="flex: 1; min-width: 120px;">
+                    <label
+                        style="display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">
+                        <i data-lucide="calendar-days" style="width: 12px; display: inline; margin-right: 4px;"></i>
+                        Tahun
+                    </label>
+                    <select id="globalFilterYear" onchange="applyGlobalFilters()"
+                        style="width: 100%; padding: 8px 12px; background: rgba(21, 21, 34, 0.9); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 13px;">
+                        <option value="" style="background: #1a1a2e; color: white;">Semua Tahun</option>
+                        <option value="2024" style="background: #1a1a2e; color: white;">2024</option>
+                        <option value="2025" style="background: #1a1a2e; color: white;">2025</option>
+                        <option value="2026" style="background: #1a1a2e; color: white;">2026</option>
+                        <option value="2027" style="background: #1a1a2e; color: white;">2027</option>
+                        <option value="2028" style="background: #1a1a2e; color: white;">2028</option>
+                        <option value="2029" style="background: #1a1a2e; color: white;">2029</option>
+                        <option value="2030" style="background: #1a1a2e; color: white;">2030</option>
+                        <option value="2031" style="background: #1a1a2e; color: white;">2031</option>
+                        <option value="2032" style="background: #1a1a2e; color: white;">2032</option>
+                        <option value="2033" style="background: #1a1a2e; color: white;">2033</option>
+                        <option value="2034" style="background: #1a1a2e; color: white;">2034</option>
+                        <option value="2035" style="background: #1a1a2e; color: white;">2035</option>
+                    </select>
+                </div>
+                <div style="display: flex; align-items: end;">
+                    <button onclick="resetGlobalFilters()"
+                        style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 16px; background: linear-gradient(135deg, #ff8800, #ffbf00); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.3s; height: 38px;">
+                        <i data-lucide="rotate-ccw" style="width: 14px; height: 14px;"></i>
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Executive Summary KPIs -->
+        <div class="fade-in-up"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
+            <!-- KPI Card 1: Total Initiatives -->
+            <div class="stat-card pulse-glow" onclick="openKPIPopup('total')"
+                style="cursor: pointer; position: relative; overflow: hidden;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                    <div>
+                        <div
+                            style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">
+                            Total Initiatives</div>
+                        <div id="kpi-total" class="stat-value"
+                            style="font-size: 32px; font-weight: 700; color: white; margin-top: 5px;">0</div>
+                    </div>
+                    <div
+                        style="background: linear-gradient(135deg, #0088ff, #00f2ea); padding: 10px; border-radius: 8px;">
+                        <i data-lucide="folder-kanban" style="width: 20px; height: 20px; color: white;"></i>
+                    </div>
+                </div>
+                <div id="kpi-total-trend"
+                    style="font-size: 12px; color: #00ff9d; display: flex; align-items: center; gap: 5px;">
+                    <i data-lucide="trending-up" style="width: 14px;"></i>
+                    <span>Active Projects</span>
+                </div>
+            </div>
+
+            <!-- KPI Card 2: Completion Rate -->
+            <div class="stat-card pulse-glow" onclick="openKPIPopup('completion')" style="cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                    <div>
+                        <div
+                            style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">
+                            Completion Rate</div>
+                        <div id="kpi-completion" class="stat-value"
+                            style="font-size: 32px; font-weight: 700; color: white; margin-top: 5px;">0%</div>
+                    </div>
+                    <div
+                        style="background: linear-gradient(135deg, #00ff9d, #00d9ff); padding: 10px; border-radius: 8px;">
+                        <i data-lucide="check-circle" style="width: 20px; height: 20px; color: white;"></i>
+                    </div>
+                </div>
+                <div id="kpi-completion-count" style="font-size: 12px; color: var(--text-muted);">0 of 0 completed</div>
+            </div>
+
+            <!-- KPI Card 3: Budget Utilization -->
+            <div class="stat-card pulse-glow" onclick="openKPIPopup('budget')" style="cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                    <div>
+                        <div
+                            style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">
+                            Budget Used</div>
+                        <div id="kpi-budget" class="stat-value"
+                            style="font-size: 32px; font-weight: 700; color: white; margin-top: 5px;">0%</div>
+                    </div>
+                    <div
+                        style="background: linear-gradient(135deg, #a855f7, #ec4899); padding: 10px; border-radius: 8px;">
+                        <i data-lucide="dollar-sign" style="width: 20px; height: 20px; color: white;"></i>
+                    </div>
+                </div>
+                <div id="kpi-budget-amount" style="font-size: 12px; color: var(--text-muted);">0 Jt of 0 Jt</div>
+            </div>
+
+            <!-- KPI Card 4: Average Progress -->
+            <div class="stat-card pulse-glow" onclick="openKPIPopup('progress')" style="cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                    <div>
+                        <div
+                            style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">
+                            Avg Progress</div>
+                        <div id="kpi-progress" class="stat-value"
+                            style="font-size: 32px; font-weight: 700; color: white; margin-top: 5px;">0%</div>
+                    </div>
+                    <div
+                        style="background: linear-gradient(135deg, #ffbf00, #ff8800); padding: 10px; border-radius: 8px;">
+                        <i data-lucide="activity" style="width: 20px; height: 20px; color: white;"></i>
+                    </div>
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted);">Overall momentum</div>
+            </div>
+
+            <!-- KPI Card 5: At Risk -->
+            <div class="stat-card pulse-glow" onclick="openKPIPopup('risk')" style="cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                    <div>
+                        <div
+                            style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">
+                            At Risk</div>
+                        <div id="kpi-risk" class="stat-value"
+                            style="font-size: 32px; font-weight: 700; color: #ff0055; margin-top: 5px;">0</div>
+                    </div>
+                    <div
+                        style="background: linear-gradient(135deg, #ff0055, #ff5500); padding: 10px; border-radius: 8px;">
+                        <i data-lucide="alert-triangle" style="width: 20px; height: 20px; color: white;"></i>
+                    </div>
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted);">Needs attention</div>
+            </div>
+
+            <!-- KPI Card 6: Overdue -->
+            <div class="stat-card pulse-glow" onclick="openKPIPopup('overdue')" style="cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                    <div>
+                        <div
+                            style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">
+                            Overdue</div>
+                        <div id="kpi-overdue" class="stat-value"
+                            style="font-size: 32px; font-weight: 700; color: #ff8800; margin-top: 5px;">0</div>
+                    </div>
+                    <div
+                        style="background: linear-gradient(135deg, #ff8800, #ffbf00); padding: 10px; border-radius: 8px;">
+                        <i data-lucide="clock" style="width: 20px; height: 20px; color: white;"></i>
+                    </div>
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted);">Past deadline</div>
+            </div>
+        </div>
+
+        <!-- Initiative Health Matrix -->
+        <div class="chart-card fade-in-up" style="margin-bottom: 20px;">
+            <div class="chart-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i data-lucide="target" style="width: 18px;"></i>
+                    <span class="glow-text">Initiative Health Matrix</span>
+                </div>
+                <div style="font-size: 11px; color: var(--text-muted);">Progress vs Budget Utilization</div>
+            </div>
+            <div style="position: relative; height: 400px;">
+                <canvas id="healthMatrixChart"></canvas>
+            </div>
+        </div>
+
+        <!-- AI-Powered Summary -->
+        <div class="chart-card fade-in-up"
+            style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(21, 21, 34, 0.9), rgba(26, 31, 46, 0.9));">
+            <div class="chart-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i data-lucide="sparkles" style="width: 18px; color: #00f2ea;"></i>
+                    <span class="glow-text">Ringkasan Analitik AI</span>
+                </div>
+                <div style="font-size: 11px; color: var(--text-muted);">Insight otomatis berdasarkan data inisiatif
+                </div>
+            </div>
+            <div id="aiSummary"
+                style="padding: 15px; background: rgba(0, 242, 234, 0.05); border-radius: 8px; border-left: 3px solid #00f2ea; line-height: 1.6;">
+                <p style="margin: 0; color: rgba(255,255,255,0.9); font-size: 14px;">Memuat analisis AI...</p>
+            </div>
+        </div>
+
+        <!-- AI Recommendations for Initiatives -->
+        <div class="chart-card fade-in-up" style="margin-bottom: 20px;">
+            <div class="chart-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i data-lucide="lightbulb" style="width: 18px; color: #ffbf00;"></i>
+                    <span class="glow-text">Rekomendasi AI untuk Menyelesaikan Inisiatif</span>
+                </div>
+                <div style="font-size: 11px; color: var(--text-muted);">Saran tindakan untuk setiap inisiatif</div>
+            </div>
+            <div id="aiRecommendations"
+                style="display: flex; flex-direction: column; gap: 12px; max-height: 600px; overflow-y: auto;">
+                <!-- AI recommendations will be injected here -->
+            </div>
+        </div>
+
+        <!-- KPI Detail Popup Modal -->
+        <div id="kpiModal"
+            style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 10000; align-items: center; justify-content: center;">
+            <div
+                style="background: linear-gradient(135deg, rgba(21, 21, 34, 0.95), rgba(26, 31, 46, 0.95)); border-radius: 16px; max-width: 1200px; width: 90%; max-height: 90vh; overflow: hidden; border: 1px solid rgba(0, 242, 234, 0.3); box-shadow: 0 20px 60px rgba(0, 136, 255, 0.4);">
+                <!-- Header -->
+                <div
+                    style="padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <i id="modalIcon" data-lucide="folder-kanban"
+                            style="width: 24px; height: 24px; color: #00f2ea;"></i>
+                        <h2 id="modalTitle" class="glow-text" style="margin: 0; font-size: 20px;">Detail KPI</h2>
+                    </div>
+                    <button onclick="closeKPIPopup()"
+                        style="background: none; border: none; color: white; cursor: pointer; padding: 5px;">
+                        <i data-lucide="x" style="width: 24px;"></i>
+                    </button>
+                </div>
+
+                <!-- Filters -->
+                <div
+                    style="padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0, 242, 234, 0.05);">
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: end;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label
+                                style="display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase;">Entitas</label>
+                            <select id="filterEntity" onchange="applyKPIFilters()"
+                                style="width: 100%; padding: 8px 12px; background: rgba(21, 21, 34, 0.9); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 13px;">
+                                <option value="">Semua Entitas</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <label
+                                style="display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase;">Bulan</label>
+                            <select id="filterMonth" onchange="applyKPIFilters()"
+                                style="width: 100%; padding: 8px 12px; background: rgba(21, 21, 34, 0.9); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 13px;">
+                                <option value="">Semua Bulan</option>
+                                <option value="1">Januari</option>
+                                <option value="2">Februari</option>
+                                <option value="3">Maret</option>
+                                <option value="4">April</option>
+                                <option value="5">Mei</option>
+                                <option value="6">Juni</option>
+                                <option value="7">Juli</option>
+                                <option value="8">Agustus</option>
+                                <option value="9">September</option>
+                                <option value="10">Oktober</option>
+                                <option value="11">November</option>
+                                <option value="12">Desember</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1; min-width: 120px;">
+                            <label
+                                style="display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase;">Tahun</label>
+                            <select id="filterYear" onchange="applyKPIFilters()"
+                                style="width: 100%; padding: 8px 12px; background: rgba(21, 21, 34, 0.9); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 13px;">
+                                <option value="" style="background: #1a1a2e; color: white;">Semua Tahun</option>
+                                <option value="2024" style="background: #1a1a2e; color: white;">2024</option>
+                                <option value="2025" style="background: #1a1a2e; color: white;">2025</option>
+                                <option value="2026" style="background: #1a1a2e; color: white;">2026</option>
+                                <option value="2027" style="background: #1a1a2e; color: white;">2027</option>
+                                <option value="2028" style="background: #1a1a2e; color: white;">2028</option>
+                                <option value="2029" style="background: #1a1a2e; color: white;">2029</option>
+                                <option value="2030" style="background: #1a1a2e; color: white;">2030</option>
+                                <option value="2031" style="background: #1a1a2e; color: white;">2031</option>
+                                <option value="2032" style="background: #1a1a2e; color: white;">2032</option>
+                                <option value="2033" style="background: #1a1a2e; color: white;">2033</option>
+                                <option value="2034" style="background: #1a1a2e; color: white;">2034</option>
+                                <option value="2035" style="background: #1a1a2e; color: white;">2035</option>
+                            </select>
+                        </div>
+                        <button onclick="resetKPIFilters()"
+                            style="padding: 8px 16px; background: linear-gradient(135deg, #ff8800, #ffbf00); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Content -->
+                <div id="modalContent" style="padding: 20px; max-height: 60vh; overflow-y: auto;">
+                    <!-- Content will be injected here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="js/entity-filter.js"></script>
+    <script src="js/rbac.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/menu-names.js"></script>
+    <script src="js/logout.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/charts.js"></script>
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Get user info for filtering
+        const userInfo = window.EntityFilter ? window.EntityFilter.getCurrentUserInfo() : { isAdmin: true, entity: null };
+
+        // Load initiatives from localStorage
+        const rawInitiatives = JSON.parse(localStorage.getItem('initiatives') || 'null') || MOCK_INITIATIVES;
+
+        // Apply entity filtering for regular users
+        const initiatives = userInfo.isAdmin ? rawInitiatives : (window.EntityFilter ? window.EntityFilter.filterInitiativesByUserEntity(rawInitiatives) : rawInitiatives);
+
+        // Global filtered initiatives
+        var filteredInitiatives = initiatives;
+
+        // Populate Global Entity Filter
+        const globalEntitySelect = document.getElementById('globalFilterEntity');
+
+        // Hide entity filter for regular users
+        if (!userInfo.isAdmin) {
+            const filterContainer = globalEntitySelect.closest('div');
+            if (filterContainer) {
+                globalEntitySelect.style.display = 'none';
+                // Hide the divider or wrapper if needed, but in this layout it's a flex item
+                filterContainer.style.display = 'none';
+            }
+        } else {
+            // Use ENTITIES from data.js to show all available entities (admin only)
+            Object.keys(ENTITIES).forEach(entityKey => {
+                const option = document.createElement('option');
+                option.value = entityKey;
+                option.textContent = ENTITIES[entityKey];
+                globalEntitySelect.appendChild(option);
+            });
+        }
+
+        // --- Multi-Select Dropdown Logic ---
+        function toggleMonthDropdown() {
+            const menu = document.getElementById('monthDropdownMenu');
+            if (menu.style.display === 'block') {
+                menu.style.display = 'none';
+            } else {
+                menu.style.display = 'block';
+            }
+        }
+
+        function toggleAllMonths(source) {
+            const checkboxes = document.querySelectorAll('.month-check');
+            checkboxes.forEach(cb => {
+                cb.checked = source.checked;
+            });
+            updateMonthLabel();
+            applyGlobalFilters();
+        }
+
+        function updateMonthLabel() {
+            const checkboxes = document.querySelectorAll('.month-check:checked');
+            const total = document.querySelectorAll('.month-check').length;
+            const trigger = document.getElementById('monthDropdownTrigger');
+            const allCheck = document.querySelector('input[value="All"]');
+
+            if (checkboxes.length === total) {
+                trigger.innerText = 'Semua Bulan';
+                allCheck.checked = true;
+                allCheck.indeterminate = false;
+            } else if (checkboxes.length === 0) {
+                trigger.innerText = 'Pilih Bulan';
+                allCheck.checked = false;
+                allCheck.indeterminate = false;
+            } else {
+                allCheck.checked = false;
+                allCheck.indeterminate = true;
+
+                if (checkboxes.length <= 2) {
+                    const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+                    const names = Array.from(checkboxes).map(cb => months[cb.value]);
+                    trigger.innerText = names.join(', ');
+                } else {
+                    trigger.innerText = `${checkboxes.length} Bulan Dipilih`;
+                }
+            }
+            applyGlobalFilters();
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function (e) {
+            const container = document.getElementById('monthDropdownContainer');
+            if (container && !container.contains(e.target)) {
+                document.getElementById('monthDropdownMenu').style.display = 'none';
+            }
+        });
+
+        // Apply Global Filters
+        function applyGlobalFilters() {
+            const entity = document.getElementById('globalFilterEntity').value;
+            // Get Selected Months (Multi-select)
+            const monthCheckboxes = document.querySelectorAll('.month-check:checked');
+            const selectedMonths = Array.from(monthCheckboxes).map(cb => parseInt(cb.value));
+            const isAllMonths = document.querySelector('input[value="All"]').checked || monthCheckboxes.length === 12;
+
+            const year = document.getElementById('globalFilterYear').value;
+
+            filteredInitiatives = initiatives.filter(i => {
+                if (entity && i.entity !== entity) return false;
+
+                if (year || !isAllMonths) {
+                    if (!i.dueDate) return false;
+                    const dueDate = new Date(i.dueDate);
+
+                    // Filter by Month
+                    if (!isAllMonths) {
+                        if (selectedMonths.length === 0) return false; // Nothing selected
+                        if (!selectedMonths.includes(dueDate.getMonth())) return false;
+                    }
+
+                    // Filter by Year
+                    if (year && dueDate.getFullYear() != year) return false;
+                }
+
+                return true;
+            });
+
+            // Update all components
+            updateKPIs();
+            renderHealthMatrix();
+            generateAISummary();
+            generateAIRecommendations();
+        }
+
+        // Reset Global Filters
+        function resetGlobalFilters() {
+            document.getElementById('globalFilterEntity').value = '';
+
+            // Reset Dropdown
+            document.querySelector('input[value="All"]').checked = true;
+            const checkboxes = document.querySelectorAll('.month-check');
+            checkboxes.forEach(cb => cb.checked = true);
+            updateMonthLabel();
+
+            document.getElementById('globalFilterYear').value = '';
+
+            // applyGlobalFilters will be called by updateMonthLabel -> but we can call it here explicitly to be sure
+            // Actually updateMonthLabel calls applyGlobalFilters
+        }
+
+        // Calculate KPIs
+        function updateKPIs() {
+            const total = filteredInitiatives.length;
+            const done = filteredInitiatives.filter(i => i.status === 'Done').length;
+            const completionRate = total > 0 ? Math.round((done / total) * 100) : 0;
+
+            const totalBudget = filteredInitiatives.reduce((sum, i) => sum + (i.budget || 0), 0);
+            const totalCost = filteredInitiatives.reduce((sum, i) => sum + (i.cost || 0), 0);
+            const budgetUtil = totalBudget > 0 ? Math.round((totalCost / totalBudget) * 100) : 0;
+
+            const avgProgress = total > 0 ? Math.round(filteredInitiatives.reduce((sum, i) => sum + (i.progress || 0), 0) / total) : 0;
+
+            const today = new Date();
+            const atRisk = filteredInitiatives.filter(i => {
+                if (!i.dueDate || i.status === 'Done') return false;
+                const due = new Date(i.dueDate);
+                const daysUntilDue = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+                return daysUntilDue < 30 && daysUntilDue >= 0;
+            }).length;
+
+            const overdue = filteredInitiatives.filter(i => {
+                if (!i.dueDate || i.status === 'Done') return false;
+                return new Date(i.dueDate) < today;
+            }).length;
+
+            // Update DOM
+            const elTotal = document.getElementById('kpi-total'); if (elTotal) elTotal.innerText = total;
+            const elComp = document.getElementById('kpi-completion'); if (elComp) elComp.innerText = completionRate + '%';
+            const elCompCount = document.getElementById('kpi-completion-count'); if (elCompCount) elCompCount.innerText = `${done} of ${total} completed`;
+            const elBudget = document.getElementById('kpi-budget'); if (elBudget) elBudget.innerText = budgetUtil + '%';
+            const elBudgetAmt = document.getElementById('kpi-budget-amount'); if (elBudgetAmt) elBudgetAmt.innerText = `${(totalCost / 1000000).toFixed(0)} Jt of ${(totalBudget / 1000000).toFixed(0)} Jt`;
+            const elProg = document.getElementById('kpi-progress'); if (elProg) elProg.innerText = avgProgress + '%';
+            const elRisk = document.getElementById('kpi-risk'); if (elRisk) elRisk.innerText = atRisk;
+            const elOverdue = document.getElementById('kpi-overdue'); if (elOverdue) elOverdue.innerText = overdue;
+        }
+
+        // Render Health Matrix (Scatter Plot)
+        function renderHealthMatrix() {
+            const ctx = document.getElementById('healthMatrixChart');
+            if (!ctx) return;
+
+            // Destroy existing chart if any
+            const existingChart = Chart.getChart(ctx);
+            if (existingChart) existingChart.destroy();
+
+            const data = filteredInitiatives.map(i => ({
+                x: i.progress || 0,
+                y: i.budget > 0 ? Math.round((i.cost / i.budget) * 100) : 0,
+                label: i.name,
+                status: i.status
+            }));
+
+            new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Initiatives',
+                        data: data,
+                        backgroundColor: data.map(d => {
+                            if (d.status === 'Done') return '#00ff9d';
+                            if (d.y > 100) return '#ff0055';
+                            if (d.x < 50) return '#ff8800';
+                            return '#0088ff';
+                        }),
+                        borderColor: 'rgba(255,255,255,0.3)',
+                        borderWidth: 1,
+                        pointRadius: 8,
+                        pointHoverRadius: 12
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const point = context.raw;
+                                    return `${point.label}: ${point.x}% progress, ${point.y}% budget used`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Progress (%)', color: '#fff' },
+                            min: 0,
+                            max: 100,
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#fff' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Budget Utilization (%)', color: '#fff' },
+                            min: 0,
+                            max: 150,
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#fff' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Generate AI Summary in Indonesian
+        function generateAISummary() {
+            const total = filteredInitiatives.length;
+            const done = filteredInitiatives.filter(i => i.status === 'Done').length;
+            const onGoing = filteredInitiatives.filter(i => i.status === 'On Going').length;
+            const hold = filteredInitiatives.filter(i => i.status === 'Hold').length;
+            const notStarted = filteredInitiatives.filter(i => i.status === 'Not Started').length;
+
+            const today = new Date();
+            const overdue = filteredInitiatives.filter(i => {
+                if (!i.dueDate || i.status === 'Done') return false;
+                return new Date(i.dueDate) < today;
+            }).length;
+
+            const atRisk = filteredInitiatives.filter(i => {
+                if (!i.dueDate || i.status === 'Done') return false;
+                const due = new Date(i.dueDate);
+                const daysUntilDue = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+                return daysUntilDue < 30 && daysUntilDue >= 0;
+            }).length;
+
+            const avgProgress = total > 0 ? Math.round(filteredInitiatives.reduce((sum, i) => sum + (i.progress || 0), 0) / total) : 0;
+            const totalBudget = filteredInitiatives.reduce((sum, i) => sum + (i.budget || 0), 0);
+            const totalCost = filteredInitiatives.reduce((sum, i) => sum + (i.cost || 0), 0);
+            const budgetUtil = totalBudget > 0 ? Math.round((totalCost / totalBudget) * 100) : 0;
+
+            let summary = `<div style="margin-bottom: 12px;"><strong style="color: #00f2ea; font-size: 15px;">📊 Ringkasan Portofolio</strong></div>`;
+
+            summary += `<p style="margin-bottom: 10px;">Saat ini terdapat <strong style="color: #00f2ea;">${total} inisiatif</strong> dalam portofolio, dengan <strong style="color: #00ff9d;">${done} inisiatif (${Math.round(done / total * 100)}%)</strong> telah selesai dan <strong style="color: #0088ff;">${onGoing} inisiatif</strong> sedang berjalan.</p>`;
+
+            if (overdue > 0) {
+                summary += `<p style="margin-bottom: 10px;">⚠️ <strong style="color: #ff0055;">Perhatian:</strong> Terdapat <strong>${overdue} inisiatif terlambat</strong> yang memerlukan tindakan segera untuk mengejar keterlambatan.</p>`;
+            }
+
+            if (atRisk > 0) {
+                summary += `<p style="margin-bottom: 10px;">⏰ <strong style="color: #ff8800;">Peringatan:</strong> Ada <strong>${atRisk} inisiatif berisiko</strong> dengan deadline kurang dari 30 hari yang perlu diprioritaskan.</p>`;
+            }
+
+            if (hold > 0) {
+                summary += `<p style="margin-bottom: 10px;">⏸️ Terdapat <strong style="color: #ffbf00;">${hold} inisiatif ditunda</strong> yang perlu evaluasi untuk dilanjutkan atau dibatalkan.</p>`;
+            }
+
+            summary += `<p style="margin-bottom: 10px;">📈 Rata-rata progres keseluruhan adalah <strong style="color: ${avgProgress >= 70 ? '#00ff9d' : avgProgress >= 40 ? '#ffbf00' : '#ff0055'};">${avgProgress}%</strong>, dengan utilisasi anggaran sebesar <strong style="color: ${budgetUtil <= 100 ? '#00ff9d' : '#ff0055'};">${budgetUtil}%</strong>.</p>`;
+
+            if (budgetUtil > 100) {
+                summary += `<p style="margin-bottom: 10px;">💰 <strong style="color: #ff0055;">Peringatan Anggaran:</strong> Utilisasi anggaran melebihi 100%, diperlukan review dan realokasi anggaran.</p>`;
+            }
+
+            summary += `<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);"><strong style="color: #a855f7;">💡 Rekomendasi Utama:</strong><br/>`;
+            if (overdue > 0) {
+                summary += `1. Fokuskan sumber daya pada ${overdue} inisiatif terlambat<br/>`;
+            }
+            if (atRisk > 0) {
+                summary += `${overdue > 0 ? '2' : '1'}. Percepat ${atRisk} inisiatif yang mendekati deadline<br/>`;
+            }
+            if (notStarted > 0) {
+                summary += `${overdue + atRisk > 0 ? '3' : '1'}. Mulai ${notStarted} inisiatif yang belum dimulai<br/>`;
+            }
+            summary += `</div>`;
+
+            const elSummary = document.getElementById('aiSummary');
+            if (elSummary) elSummary.innerHTML = summary;
+        }
+
+        // Generate AI Recommendations for Each Initiative
+        function generateAIRecommendations() {
+            const container = document.getElementById('aiRecommendations');
+            if (!container) return;
+            const today = new Date();
+
+            // Filter and sort initiatives that need attention
+            const needsAttention = filteredInitiatives.filter(i => i.status !== 'Done' && i.status !== 'Cancelled').sort((a, b) => {
+                // Priority: Overdue > At Risk > Low Progress > Others
+                const aOverdue = a.dueDate && new Date(a.dueDate) < today;
+                const bOverdue = b.dueDate && new Date(b.dueDate) < today;
+                if (aOverdue && !bOverdue) return -1;
+                if (!aOverdue && bOverdue) return 1;
+
+                const aDaysLeft = a.dueDate ? Math.ceil((new Date(a.dueDate) - today) / (1000 * 60 * 60 * 24)) : 999;
+                const bDaysLeft = b.dueDate ? Math.ceil((new Date(b.dueDate) - today) / (1000 * 60 * 60 * 24)) : 999;
+
+                return aDaysLeft - bDaysLeft;
+            });
+
+            let html = '';
+            needsAttention.forEach((initiative, index) => {
+                const daysLeft = initiative.dueDate ? Math.ceil((new Date(initiative.dueDate) - today) / (1000 * 60 * 60 * 24)) : null;
+                const isOverdue = daysLeft !== null && daysLeft < 0;
+                const isAtRisk = daysLeft !== null && daysLeft >= 0 && daysLeft < 30;
+                const progress = initiative.progress || 0;
+
+                let priority = 'normal';
+                let priorityColor = '#0088ff';
+                let priorityLabel = 'Normal';
+                let recommendation = '';
+
+                if (isOverdue) {
+                    priority = 'critical';
+                    priorityColor = '#ff0055';
+                    priorityLabel = 'Kritis';
+                    recommendation = `Inisiatif ini sudah terlambat ${Math.abs(daysLeft)} hari. <strong>Tindakan segera:</strong> Lakukan review mendalam, realokasi sumber daya prioritas, dan buat action plan percepatan dengan milestone mingguan.`;
+                } else if (isAtRisk) {
+                    priority = 'high';
+                    priorityColor = '#ff8800';
+                    priorityLabel = 'Tinggi';
+                    recommendation = `Deadline dalam ${daysLeft} hari dengan progres ${progress}%. <strong>Rekomendasi:</strong> Tingkatkan frekuensi monitoring, identifikasi blocker, dan tambahkan resource jika diperlukan.`;
+                } else if (progress < 30 && initiative.status === 'On Going') {
+                    priority = 'medium';
+                    priorityColor = '#ffbf00';
+                    priorityLabel = 'Sedang';
+                    recommendation = `Progres masih rendah (${progress}%). <strong>Saran:</strong> Evaluasi hambatan, pastikan owner memiliki resource yang cukup, dan buat breakdown task yang lebih detail.`;
+                } else if (initiative.status === 'Not Started') {
+                    priority = 'medium';
+                    priorityColor = '#888';
+                    priorityLabel = 'Sedang';
+                    recommendation = `Inisiatif belum dimulai. <strong>Tindakan:</strong> Jadwalkan kickoff meeting, assign owner yang jelas, dan tentukan milestone awal.`;
+                } else if (initiative.status === 'Hold') {
+                    priority = 'low';
+                    priorityColor = '#ffbf00';
+                    priorityLabel = 'Review';
+                    recommendation = `Inisiatif ditunda. <strong>Evaluasi:</strong> Tentukan apakah akan dilanjutkan, dibatalkan, atau perlu perubahan scope. Jangan biarkan terlalu lama dalam status hold.`;
+                } else {
+                    recommendation = `Inisiatif berjalan baik dengan progres ${progress}%. <strong>Pertahankan:</strong> Lanjutkan monitoring rutin dan pastikan tidak ada blocker yang muncul.`;
+                }
+
+                html += `
+                    <div style="background: rgba(21, 21, 34, 0.7); border-left: 3px solid ${priorityColor}; border-radius: 8px; padding: 15px; transition: all 0.3s;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                                    <span style="background: ${priorityColor}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600;">${priorityLabel}</span>
+                                    <span style="color: white; font-weight: 600; font-size: 14px;">${initiative.name}</span>
+                                </div>
+                                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">
+                                    Status: ${initiative.status} | Progres: ${progress}% | Owner: ${initiative.owner}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="color: rgba(255,255,255,0.85); font-size: 13px; line-height: 1.5; margin-bottom: 10px;">
+                            ${recommendation}
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="window.location.href='projects.html?highlight=${initiative.id}'" class="ripple" style="background: linear-gradient(135deg, #0088ff, #00f2ea); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; transition: all 0.3s;">
+                                <i data-lucide="external-link" style="width: 12px; display: inline; margin-right: 4px;"></i>
+                                Lihat Detail
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (needsAttention.length === 0) {
+                html = '<div style="text-align: center; padding: 40px; color: var(--text-muted);">✅ Semua inisiatif dalam kondisi baik!</div>';
+            }
+
+            container.innerHTML = html;
+            setTimeout(() => lucide.createIcons(), 100);
+        }
+
+        // Initialize
+        updateKPIs();
+        renderHealthMatrix();
+        generateAISummary();
+        generateAIRecommendations();
+
+        // === KPI POPUP SYSTEM ===
+        let currentKPIType = '';
+        let allInitiatives = initiatives;
+
+        // Populate Entity Filter for KPI Popup
+        const entitySelect = document.getElementById('filterEntity');
+        if (entitySelect) {
+            Object.keys(ENTITIES).forEach(entityKey => {
+                const option = document.createElement('option');
+                option.value = entityKey;
+                option.textContent = ENTITIES[entityKey];
+                entitySelect.appendChild(option);
+            });
+        }
+
+        function openKPIPopup(kpiType) {
+            currentKPIType = kpiType;
+            const modal = document.getElementById('kpiModal');
+            const modalIcon = document.getElementById('modalIcon');
+            const modalTitle = document.getElementById('modalTitle');
+
+            // Set title and icon based on KPI type
+            const kpiConfig = {
+                'total': { title: 'Total Initiatives', icon: 'folder-kanban', color: '#0088ff' },
+                'completion': { title: 'Completion Rate', icon: 'check-circle', color: '#00ff9d' },
+                'budget': { title: 'Budget Utilization', icon: 'dollar-sign', color: '#a855f7' },
+                'progress': { title: 'Average Progress', icon: 'activity', color: '#ffbf00' },
+                'risk': { title: 'At Risk Initiatives', icon: 'alert-triangle', color: '#ff0055' },
+                'overdue': { title: 'Overdue Initiatives', icon: 'clock', color: '#ff8800' }
+            };
+
+            const config = kpiConfig[kpiType];
+            if (config && modalTitle) {
+                modalTitle.textContent = config.title;
+                modalIcon.setAttribute('data-lucide', config.icon);
+                modalIcon.style.color = config.color;
+
+                modal.style.display = 'flex';
+                resetKPIFilters();
+                renderKPIContent();
+                setTimeout(() => lucide.createIcons(), 100);
+            }
+        }
+
+        function closeKPIPopup() {
+            document.getElementById('kpiModal').style.display = 'none';
+        }
+
+        function resetKPIFilters() {
+            const fe = document.getElementById('filterEntity'); if (fe) fe.value = '';
+            const fm = document.getElementById('filterMonth'); if (fm) fm.value = '';
+            const fy = document.getElementById('filterYear'); if (fy) fy.value = '';
+            applyKPIFilters();
+        }
+
+        function applyKPIFilters() {
+            renderKPIContent();
+        }
+
+        function getFilteredInitiatives() {
+            const fe = document.getElementById('filterEntity');
+            const entity = fe ? fe.value : '';
+            const fm = document.getElementById('filterMonth');
+            const month = fm ? fm.value : '';
+            const fy = document.getElementById('filterYear');
+            const year = fy ? fy.value : '';
+
+            return allInitiatives.filter(i => {
+                if (entity && i.entity !== entity) return false;
+
+                if (month || year) {
+                    if (!i.dueDate) return false;
+                    const dueDate = new Date(i.dueDate);
+                    if (month && (dueDate.getMonth() + 1) != month) return false;
+                    if (year && dueDate.getFullYear() != year) return false;
+                }
+
+                return true;
+            });
+        }
+
+        function renderKPIContent() {
+            const filtered = getFilteredInitiatives();
+            const content = document.getElementById('modalContent');
+            const today = new Date();
+
+            let html = '';
+            let data = [];
+
+            switch (currentKPIType) {
+                case 'total':
+                    data = filtered;
+                    html = `<div style="margin-bottom: 15px; display: flex; gap: 15px; flex-wrap: wrap;">
+                        <div style="background: rgba(0, 136, 255, 0.1); padding: 12px 20px; border-radius: 8px; border-left: 3px solid #0088ff;">
+                            <div style="font-size: 11px; color: var(--text-muted);">Total</div>
+                            <div style="font-size: 24px; font-weight: 700; color: #0088ff;">${filtered.length}</div>
+                        </div>
+                        <div style="background: rgba(0, 255, 157, 0.1); padding: 12px 20px; border-radius: 8px; border-left: 3px solid #00ff9d;">
+                            <div style="font-size: 11px; color: var(--text-muted);">Done</div>
+                            <div style="font-size: 24px; font-weight: 700; color: #00ff9d;">${filtered.filter(i => i.status === 'Done').length}</div>
+                        </div>
+                        <div style="background: rgba(0, 136, 255, 0.1); padding: 12px 20px; border-radius: 8px; border-left: 3px solid #0088ff;">
+                            <div style="font-size: 11px; color: var(--text-muted);">On Going</div>
+                            <div style="font-size: 24px; font-weight: 700; color: #0088ff;">${filtered.filter(i => i.status === 'On Going').length}</div>
+                        </div>
+                    </div>`;
+                    break;
+
+                case 'completion':
+                    data = filtered.filter(i => i.status === 'Done');
+                    const completionRate = filtered.length > 0 ? Math.round((data.length / filtered.length) * 100) : 0;
+                    html = `<div style="margin-bottom: 15px; background: rgba(0, 255, 157, 0.1); padding: 15px; border-radius: 8px; border-left: 3px solid #00ff9d;">
+                        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 5px;">Completion Rate</div>
+                        <div style="font-size: 32px; font-weight: 700; color: #00ff9d;">${completionRate}%</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">${data.length} of ${filtered.length} initiatives completed</div>
+                    </div>`;
+                    break;
+
+                case 'budget':
+                    data = filtered;
+                    const totalBudget = filtered.reduce((sum, i) => sum + (i.budget || 0), 0);
+                    const totalCost = filtered.reduce((sum, i) => sum + (i.cost || 0), 0);
+                    const budgetUtil = totalBudget > 0 ? Math.round((totalCost / totalBudget) * 100) : 0;
+                    html = `<div style="margin-bottom: 15px; background: rgba(168, 85, 247, 0.1); padding: 15px; border-radius: 8px; border-left: 3px solid #a855f7;">
+                        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 5px;">Budget Utilization</div>
+                        <div style="font-size: 32px; font-weight: 700; color: #a855f7;">${budgetUtil}%</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">${(totalCost / 1000000).toFixed(1)} Jt of ${(totalBudget / 1000000).toFixed(1)} Jt used</div>
+                    </div>`;
+                    break;
+
+                case 'progress':
+                    data = filtered;
+                    const avgProg = filtered.length > 0 ? Math.round(filtered.reduce((sum, i) => sum + (i.progress || 0), 0) / filtered.length) : 0;
+                    html = `<div style="margin-bottom: 15px; background: rgba(255, 191, 0, 0.1); padding: 15px; border-radius: 8px; border-left: 3px solid #ffbf00;">
+                        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 5px;">Average Progress</div>
+                        <div style="font-size: 32px; font-weight: 700; color: #ffbf00;">${avgProg}%</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">Across ${filtered.length} initiatives</div>
+                    </div>`;
+                    break;
+
+                case 'risk':
+                    data = filtered.filter(i => {
+                        if (!i.dueDate || i.status === 'Done') return false;
+                        const due = new Date(i.dueDate);
+                        const daysLeft = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+                        return daysLeft < 30 && daysLeft >= 0;
+                    });
+                    html = `<div style="margin-bottom: 15px; background: rgba(255, 0, 85, 0.1); padding: 15px; border-radius: 8px; border-left: 3px solid #ff0055;">
+                        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 5px;">At Risk Initiatives</div>
+                        <div style="font-size: 32px; font-weight: 700; color: #ff0055;">${data.length}</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">Due within 30 days</div>
+                    </div>`;
+                    break;
+
+                case 'overdue':
+                    data = filtered.filter(i => {
+                        if (!i.dueDate || i.status === 'Done') return false;
+                        return new Date(i.dueDate) < today;
+                    });
+                    html = `<div style="margin-bottom: 15px; background: rgba(255, 136, 0, 0.1); padding: 15px; border-radius: 8px; border-left: 3px solid #ff8800;">
+                        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 5px;">Overdue Initiatives</div>
+                        <div style="font-size: 32px; font-weight: 700; color: #ff8800;">${data.length}</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">Past deadline</div>
+                    </div>`;
+                    break;
+            }
+
+            // Add table
+            if (data.length > 0) {
+                html += `<table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                    <thead>
+                        <tr style="background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <th style="padding: 10px; text-align: left; color: var(--text-muted); font-weight: 600;">Initiative</th>
+                            <th style="padding: 10px; text-align: left; color: var(--text-muted); font-weight: 600;">Status</th>
+                            <th style="padding: 10px; text-align: left; color: var(--text-muted); font-weight: 600;">Progress</th>
+                            <th style="padding: 10px; text-align: left; color: var(--text-muted); font-weight: 600;">Owner</th>
+                            <th style="padding: 10px; text-align: left; color: var(--text-muted); font-weight: 600;">Due Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+                data.forEach((init, idx) => {
+                    const bgColor = idx % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent';
+                    html += `<tr style="background: ${bgColor}; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 10px; color: white;">${init.name}</td>
+                        <td style="padding: 10px;"><span style="background: ${getStatusColor(init.status)}; padding: 2px 8px; border-radius: 4px; font-size: 11px;">${init.status}</span></td>
+                        <td style="padding: 10px; color: white;">${init.progress || 0}%</td>
+                        <td style="padding: 10px; color: var(--text-muted);">${init.owner}</td>
+                        <td style="padding: 10px; color: var(--text-muted);">${init.dueDate || '-'}</td>
+                    </tr>`;
+                });
+
+                html += `</tbody></table>`;
+            } else {
+                html += `<div style="text-align: center; padding: 40px; color: var(--text-muted);">Tidak ada data untuk filter yang dipilih</div>`;
+            }
+
+            if (content) content.innerHTML = html;
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                'Done': '#00ff9d',
+                'On Going': '#0088ff',
+                'Hold': '#ff8800',
+                'Not Started': '#888',
+                'Carry Over': '#ffbf00',
+                'Cancelled': '#ff0055'
+            };
+            return colors[status] || '#888';
+        }
+
+        // Close modal on outside click
+        const modalEl = document.getElementById('kpiModal');
+        if (modalEl) {
+            modalEl.addEventListener('click', function (e) {
+                if (e.target === this) closeKPIPopup();
+            });
+        }
+
+        // Re-initialize icons after dynamic content
+        setTimeout(() => lucide.createIcons(), 100);
+
+        // Listen for data updates from other pages
+        window.addEventListener('initiatives-updated', function () {
+            console.log('📈 Analytics: Initiatives data updated, refreshing...');
+            // Reload initiatives from localStorage
+            const rawInitiatives = JSON.parse(localStorage.getItem('initiatives') || 'null') || MOCK_INITIATIVES;
+
+            // Re-apply entity filtering for users
+            if (userInfo && !userInfo.isAdmin) {
+                initiatives = window.EntityFilter ? window.EntityFilter.filterInitiativesByUserEntity(rawInitiatives) : rawInitiatives;
+            } else {
+                initiatives = rawInitiatives;
+            }
+
+            filteredInitiatives = initiatives;
+
+            // Refresh all charts and KPIs
+            applyGlobalFilters();
+        });
+
+        // Listen for storage events (cross-tab updates)
+        window.addEventListener('storage', function (e) {
+            if (e.key === 'initiatives') {
+                console.log('📈 Analytics: Storage changed, refreshing...');
+                // Reload initiatives from localStorage
+                const rawInitiatives = JSON.parse(e.newValue || 'null') || MOCK_INITIATIVES;
+
+                // Re-apply entity filtering for users
+                if (userInfo && !userInfo.isAdmin) {
+                    initiatives = window.EntityFilter ? window.EntityFilter.filterInitiativesByUserEntity(rawInitiatives) : rawInitiatives;
+                } else {
+                    initiatives = rawInitiatives;
+                }
+
+                filteredInitiatives = initiatives;
+
+                // Refresh all charts and KPIs
+                applyGlobalFilters();
+            }
+        });
+    </script>
+</body>
+
+</html>

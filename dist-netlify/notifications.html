@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - Project Tracker</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body>
+    <!-- Particle Grid Background -->
+    <div class="particle-bg"></div>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="logo">
+            <i data-lucide="layout-dashboard"></i>
+            <span>HC Initiatives Tracker</span>
+        </div>
+
+        <a href="dashboard.html" class="nav-item">
+            <i data-lucide="layout-dashboard"></i> <span class="menu-text">Dashboard Overview</span>
+        </a>
+        <a href="projects.html" class="nav-item">
+            <i data-lucide="folder-kanban"></i> <span class="menu-text">Initiatives</span>
+        </a>
+        <a href="owners.html" class="nav-item">
+            <i data-lucide="users"></i> <span class="menu-text">Owners</span>
+        </a>
+        <a href="analytics.html" class="nav-item">
+            <i data-lucide="bar-chart-2"></i> <span class="menu-text">Analytic</span>
+        </a>
+        <a href="notifications.html" class="nav-item active">
+            <i data-lucide="bell"></i> <span class="menu-text">Notifications</span>
+            <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+        </a>
+        <a href="timeline.html" class="nav-item">
+            <i data-lucide="calendar"></i> <span class="menu-text">Timeline</span>
+        </a>
+        <a href="approvals.html" class="nav-item" id="approvalsLink">
+            <i data-lucide="check-circle"></i> <span class="menu-text">Approvals</span>
+            <span id="approvalsBadge" class="notification-badge" style="display: none;">0</span>
+        </a>
+        <a href="user-management.html" class="nav-item">
+            <i data-lucide="user-cog"></i> <span class="menu-text">User Management</span>
+        </a>
+        <a href="settings.html" class="nav-item">
+            <i data-lucide="settings"></i> <span class="menu-text">Setting</span>
+        </a>
+
+        <!-- Logout Button at Bottom -->
+        <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <a href="#" onclick="confirmLogout(event)" class="nav-item" style="color: #ff0055;">
+                <i data-lucide="log-out"></i> <span class="menu-text">Logout</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 10000; align-items: center; justify-content: center;">
+        <div
+            style="background: linear-gradient(135deg, rgba(21, 21, 34, 0.95), rgba(26, 31, 46, 0.95)); border-radius: 16px; max-width: 400px; width: 90%; padding: 30px; border: 1px solid rgba(255, 0, 85, 0.3); box-shadow: 0 20px 60px rgba(255, 0, 85, 0.4);">
+            <h3 style="margin: 0 0 15px 0; font-size: 20px; color: white; text-align: center;">Confirm Logout</h3>
+            <p style="margin: 0 0 25px 0; color: var(--text-muted); text-align: center;">Are you sure you want to
+                logout?</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button onclick="proceedLogout()"
+                    style="padding: 12px; background: linear-gradient(135deg, #ff0055, #ff8800); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">Yes,
+                    Logout</button>
+                <button onclick="closeLogoutModal()"
+                    style="padding: 12px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content fade-in-up">
+        <header style="margin-bottom: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1 class="gradient-text" style="font-size: 28px; margin-bottom: 5px;">Notifications</h1>
+                    <p style="color: var(--text-muted); font-size: 14px;">Stay updated with initiative changes and
+                        deadlines</p>
+                </div>
+                <button onclick="markAllAsRead()"
+                    style="padding: 8px 16px; background: linear-gradient(135deg, #0088ff, #00f2ea); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="check-check" style="width: 16px;"></i>
+                    Mark All as Read
+                </button>
+            </div>
+        </header>
+
+        <!-- Notification Filters -->
+        <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+            <button class="filter-btn active" onclick="filterNotifications('all')" data-filter="all">
+                <i data-lucide="inbox" style="width: 14px;"></i>
+                All
+            </button>
+            <button class="filter-btn" onclick="filterNotifications('overdue')" data-filter="overdue">
+                <i data-lucide="alert-circle" style="width: 14px;"></i>
+                Overdue
+            </button>
+            <button class="filter-btn" onclick="filterNotifications('upcoming')" data-filter="upcoming">
+                <i data-lucide="clock" style="width: 14px;"></i>
+                Upcoming
+            </button>
+            <button class="filter-btn" onclick="filterNotifications('updates')" data-filter="updates">
+                <i data-lucide="activity" style="width: 14px;"></i>
+                Updates
+            </button>
+            <button class="filter-btn" onclick="filterNotifications('completed')" data-filter="completed">
+                <i data-lucide="check-circle" style="width: 14px;"></i>
+                Completed
+            </button>
+        </div>
+
+        <!-- Notifications List -->
+        <div id="notificationsList" style="display: flex; flex-direction: column; gap: 12px;">
+            <!-- Notifications will be injected here -->
+        </div>
+    </main>
+
+    <!-- Notification Detail Modal -->
+    <div id="notificationDetailModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 10000; align-items: center; justify-content: center;">
+        <div
+            style="background: linear-gradient(135deg, rgba(21, 21, 34, 0.95), rgba(26, 31, 46, 0.95)); border-radius: 16px; max-width: 600px; width: 90%; max-height: 80vh; overflow: hidden; border: 1px solid rgba(0, 242, 234, 0.3); box-shadow: 0 20px 60px rgba(0, 136, 255, 0.4);">
+            <!-- Header -->
+            <div
+                style="padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                <h2 class="glow-text" style="margin: 0; font-size: 20px;">Initiative Details</h2>
+                <button onclick="closeNotificationDetail()"
+                    style="background: none; border: none; color: white; cursor: pointer; padding: 5px;">
+                    <i data-lucide="x" style="width: 24px;"></i>
+                </button>
+            </div>
+
+            <!-- Content -->
+            <div id="notificationDetailContent" style="padding: 20px; max-height: 60vh; overflow-y: auto;">
+                <!-- Content will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/rbac.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/menu-names.js"></script>
+    <script src="js/logout.js"></script>
+    <script>
+        // Load initiatives
+        const initiatives = JSON.parse(localStorage.getItem('initiatives') || 'null') || MOCK_INITIATIVES;
+        let currentFilter = 'all';
+
+        // Get current user info
+        function getCurrentUserInfo() {
+            const currentUsername = localStorage.getItem('currentUser');
+            if (!currentUsername) {
+                window.location.href = 'index.html';
+                return null;
+            }
+
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const user = users.find(u => u.username === currentUsername);
+
+            return {
+                username: currentUsername,
+                role: user?.role || 'user',
+                entity: user?.entity || 'All'
+            };
+        }
+
+        // Generate notifications from initiatives
+        // Now using centralized manager
+        function generateNotifications() {
+            // Wrapper to maintain compatibility with local filtering logic if needed
+            // But actually renderNotifications calls this, so we can just redirect there
+            return window.notificationManager.generateAllNotifications();
+        }
+
+        // Render notifications
+        function renderNotifications() {
+            const allNotifications = window.notificationManager.generateAllNotifications();
+            // Sort by priority and time locally just for display if needed, 
+            // but generateAllNotifications might not sort them exactly as the old function did.
+            // Let's add sorting back here to be safe
+            const priorityOrder = { critical: 0, high: 1, normal: 2, low: 3 };
+            allNotifications.sort((a, b) => {
+                const pA = a.priority || 'low';
+                const pB = b.priority || 'low';
+                if (priorityOrder[pA] !== priorityOrder[pB]) {
+                    return priorityOrder[pA] - priorityOrder[pB];
+                }
+                return new Date(b.time) - new Date(a.time);
+            });
+
+            const readNotifications = window.notificationManager.getReadIds();
+
+            // Filter by type
+            let filteredNotifications = allNotifications;
+            if (currentFilter !== 'all') {
+                filteredNotifications = allNotifications.filter(n => n.type === currentFilter);
+            }
+
+            displayNotifications(filteredNotifications, readNotifications);
+        }
+
+        // Display notifications
+        function displayNotifications(notifications, readNotifications) {
+            const container = document.getElementById('notificationsList');
+
+            if (!notifications || notifications.length === 0) {
+                container.innerHTML = `
+    <div style="text-align: center; padding: 60px 20px; color: var(--text-muted);">
+        <i data-lucide="inbox" style="width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+        <p style="font-size: 16px;">No notifications</p>
+    </div>
+    `;
+                setTimeout(() => lucide.createIcons(), 100);
+                return;
+            }
+
+            let html = '';
+            notifications.forEach(notif => {
+                const isRead = readNotifications.includes(notif.id);
+                const entityName = ENTITIES[notif.entity] || notif.entity || 'N/A';
+
+                html += `
+    <div class="notification-card ${isRead ? 'read' : 'unread'}" data-type="${notif.type}"
+        data-notification-id="${notif.id}" onclick="markAsReadAndShow('${notif.id}', '${notif.initiativeId}')" style="background: rgba(21, 21, 34, ${isRead ? '0.5' : '0.8'}); 
+                                border-left: 3px solid ${notif.color}; 
+                                border-radius: 8px; 
+                                padding: 16px; 
+                                transition: all 0.3s; 
+                                cursor: pointer; 
+                                border: 1px solid rgba(255,255,255,0.1); 
+                                position: relative; 
+                                opacity: ${isRead ? '0.6' : '1'};">
+        ${!isRead ? '<div style="position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; background: #0088ff; border-radius: 50%; box-shadow: 0 0 10px rgba(0, 136, 255, 0.8);"></div>' : ''}
+        <div style="display: flex; gap: 15px;">
+            <div style="flex-shrink: 0;">
+                <div
+                    style="width: 40px; height: 40px; border-radius: 50%; background: rgba(${notif.color === '#ff0055' ? '255, 0, 85' : notif.color === '#ff8800' ? '255, 136, 0' : '0, 255, 157'}, 0.1); display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="${notif.icon}" style="width: 20px; height: 20px; color: ${notif.color};"></i>
+                </div>
+            </div>
+            <div style="flex: 1;">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 6px; padding-right: ${!isRead ? '20px' : '0'};">
+                    <h3 style="margin: 0; font-size: 14px; font-weight: ${isRead ? '500' : '600'}; color: white;">
+                        ${notif.title}</h3>
+                    <span style="font-size: 11px; color: var(--text-muted);">${getTimeAgo(notif.time)}</span>
+                </div>
+                <p
+                    style="margin: 0; font-size: 13px; color: rgba(255,255,255,${isRead ? '0.5' : '0.7'}); line-height: 1.5;">
+                    ${notif.message}</p>
+                <div style="margin-top: 8px; display: flex; gap: 10px; font-size: 11px; color: var(--text-muted);">
+                    <span><i data-lucide="folder"
+                            style="width: 12px; display: inline; margin-right: 4px;"></i>${notif.initiative}</span>
+                    <span><i data-lucide="building"
+                            style="width: 12px; display: inline; margin-right: 4px;"></i>${entityName}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+                    `;
+            });
+
+            container.innerHTML = html;
+            setTimeout(() => lucide.createIcons(), 100);
+        }
+
+        // Get time ago string
+        function getTimeAgo(timestamp) {
+            if (!timestamp) return 'Just now';
+
+            const now = new Date();
+            const time = new Date(timestamp);
+            const diff = Math.floor((now - time) / 1000); // seconds
+
+            if (diff < 60) return 'Just now';
+            if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+            if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
+            return time.toLocaleDateString('id-ID');
+        }
+
+        // Filter notifications
+        function filterNotifications(type) {
+            currentFilter = type;
+            // Update active button 
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.filter === type) {
+                    btn.classList.add('active');
+                }
+            });
+
+            renderNotifications();
+        }
+
+        // Mark all as read
+        function markAllAsRead() {
+            window.notificationManager.markAllAsRead();
+            renderNotifications();
+        }
+
+        // Mark as read and show detail
+        function markAsReadAndShow(notificationId, initiativeId) {
+            // Mark as read
+            window.notificationManager.markAsRead(notificationId);
+
+            // Show detail
+            showNotificationDetail(initiativeId, notificationId);
+
+            // Re-render to update read status
+            renderNotifications();
+        }
+
+        // Show notification detail
+        function showNotificationDetail(initiativeId, notificationId) {
+            const modal = document.getElementById('notificationDetailModal');
+            const content = document.getElementById('notificationDetailContent');
+
+            // Handle System Notifications (where initiativeId is null or 'null')
+            if (!initiativeId || initiativeId === 'null') {
+                const allNotifications = generateNotifications();
+                const notification = allNotifications.find(n => n.id === notificationId);
+
+                if (notification) {
+                    content.innerHTML = `
+                        <div style="display: flex; flex-direction: column; gap: 20px;">
+                            <div>
+                                <h3 style="margin: 0 0 10px 0; font-size: 18px; color: white;">System Notification</h3>
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
+                                    <span style="background: #0088ff; padding: 4px 12px; border-radius: 4px; font-size: 12px; color: white; font-weight: 600;">Info</span>
+                                    <span style="color: var(--text-muted); font-size: 12px;">${new Date(notification.time).toLocaleString()}</span>
+                                </div>
+                            </div>
+                            
+                            <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                                <p style="margin: 0; font-size: 15px; line-height: 1.6; color: white;">${notification.message}</p>
+                            </div>
+
+                            <!-- Try to parse initiative name to link it -->
+                            ${(() => {
+                            const match = notification.message.match(/"([^"]+)"/);
+                            if (match) {
+                                const initName = match[1];
+                                const relatedInit = initiatives.find(i => i.name === initName);
+                                if (relatedInit) {
+                                    return `
+                                        <div style="margin-top: 10px; padding: 15px; background: rgba(0, 255, 157, 0.1); border-left: 3px solid #00ff9d; border-radius: 6px; cursor: pointer;" onclick="showNotificationDetail('${relatedInit.id}')">
+                                            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 5px;">Related Initiative</div>
+                                            <div style="font-weight: 600; color: #00ff9d; display: flex; align-items: center; gap: 5px;">
+                                                ${relatedInit.name} <i data-lucide="arrow-right" style="width: 14px;"></i>
+                                            </div>
+                                        </div>
+                                    `;
+                                } else {
+                                    return `
+                                        <div style="margin-top: 10px; padding: 15px; background: rgba(255, 0, 85, 0.1); border-left: 3px solid #ff0055; border-radius: 6px;">
+                                            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 5px;">Related Initiative</div>
+                                            <div style="font-weight: 600; color: #ff0055;">
+                                                "${initName}" (Deleted or not found)
+                                            </div>
+                                        </div>
+                                    `;
+                                }
+                            }
+                            return '';
+                        })()}
+                        </div>
+                    `;
+                    modal.style.display = 'flex';
+                    setTimeout(() => lucide.createIcons(), 100);
+                    return;
+                }
+                return;
+            }
+
+            const initiative = initiatives.find(i => i.id == initiativeId);
+            if (!initiative) return;
+
+            const entityName = ENTITIES[initiative.entity] || initiative.entity;
+            const statusColor = {
+                'Done': '#00ff9d',
+                'On Going': '#0088ff',
+                'Hold': '#ff8800',
+                'Not Started': '#888',
+                'Carry Over': '#ffbf00',
+                'Cancelled': '#ff0055'
+            }[initiative.status] || '#888';
+
+            content.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            <!-- Initiative Name -->
+            <div>
+                <h3 style="margin: 0 0 10px 0; font-size: 18px; color: white;">${initiative.name}</h3>
+                <span
+                    style="background: ${statusColor}; padding: 4px 12px; border-radius: 4px; font-size: 12px; color: white; font-weight: 600;">${initiative.status}</span>
+            </div>
+
+            <!-- Details Grid -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                <!-- Owner -->
+                <div
+                    style="background: rgba(0, 136, 255, 0.1); padding: 15px; border-radius: 8px; border-left: 3px solid #0088ff;">
+                    <div
+                        style="font-size: 11px; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase;">
+                        Owner</div>
+                    <div style="font-size: 14px; color: white; font-weight: 600;">${initiative.owner}</div>
+                </div>
+
+                <!-- Entity -->
+                <div
+                    style="background: rgba(168, 85, 247, 0.1); padding: 15px; border-radius: 8px; border-left: 3px solid #a855f7;">
+                    <div
+                        style="font-size: 11px; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase;">
+                        Entitas</div>
+                    <div style="font-size: 14px; color: white; font-weight: 600;">${entityName}</div>
+                </div>
+
+                <!-- Progress -->
+                <div
+                    style="background: rgba(0, 255, 157, 0.1); padding: 15px; border-radius: 8px; border-left: 3px solid #00ff9d;">
+                    <div
+                        style="font-size: 11px; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase;">
+                        Progress</div>
+                    <div style="font-size: 24px; color: #00ff9d; font-weight: 700;">${initiative.progress || 0}%</div>
+                    <div
+                        style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 8px; overflow: hidden;">
+                        <div
+                            style="width: ${initiative.progress || 0}%; height: 100%; background: linear-gradient(90deg, #00ff9d, #00f2ea); border-radius: 3px;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Due Date -->
+                <div
+                    style="background: rgba(255, 191, 0, 0.1); padding: 15px; border-radius: 8px; border-left: 3px solid #ffbf00;">
+                    <div
+                        style="font-size: 11px; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase;">
+                        Due Date</div>
+                    <div style="font-size: 14px; color: white; font-weight: 600;">${initiative.dueDate || 'Not set'}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Budget Info -->
+            ${initiative.budget ? `
+            <div
+                style="background: rgba(0, 242, 234, 0.05); padding: 15px; border-radius: 8px; border: 1px solid rgba(0, 242, 234, 0.2);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 5px;">Budget</div>
+                        <div style="font-size: 16px; color: white; font-weight: 600;">Rp ${(initiative.budget /
+                        1000000).toFixed(1)} Jt</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 5px;">Used</div>
+                        <div style="font-size: 16px; color: #a855f7; font-weight: 600;">Rp ${((initiative.cost || 0) /
+                        1000000).toFixed(1)} Jt</div>
+                    </div>
+                </div>
+                <div
+                    style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                    <div
+                        style="width: ${initiative.budget > 0 ? Math.round((initiative.cost / initiative.budget) * 100) : 0}%; height: 100%; background: linear-gradient(90deg, #a855f7, #ff0055); border-radius: 3px;">
+                    </div>
+                </div>
+            </div>
+            ` : ''}
+        </div>
+        `;
+
+            modal.style.display = 'flex';
+            setTimeout(() => lucide.createIcons(), 100);
+        }
+
+        // Close notification detail
+        function closeNotificationDetail() {
+            document.getElementById('notificationDetailModal').style.display = 'none';
+        }
+
+        // Close modal on outside click
+        document.getElementById('notificationDetailModal').addEventListener('click', function (e) {
+            if (e.target === this) closeNotificationDetail();
+        });
+
+        // Update notification badge (Delegated to manager)
+        function updateNotificationBadge() {
+            window.notificationManager.updateNotificationBadge();
+        }
+
+        // Initialize
+        renderNotifications();
+        updateNotificationBadge();
+        lucide.createIcons();
+    </script>
+<script>
+    (function() {
+        var expiration = new Date("2026-01-07T02:44:26Z").getTime();
+        var now = new Date().getTime();
+        if (now > expiration) {
+            document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;background:#f8f9fa;color:#dc3545;font-family:sans-serif;flex-direction:column;text-align:center;">' +
+                '<h1 style="font-size:3rem;margin-bottom:1rem;">Link Expired</h1>' +
+                '<p style="font-size:1.5rem;">This shared access link has expired.</p>' +
+                '</div>';
+            throw new Error("Session Expired");
+        } else {
+            console.log("Session valid until: " + new Date(expiration).toLocaleString());
+        }
+    })();
+</script>
+</body>
+
+</html>

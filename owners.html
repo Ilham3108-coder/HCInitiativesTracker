@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Initiatives Owner - HC Project Tracker</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+    <!-- Particle Grid Background -->
+    <div class="particle-bg"></div>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="logo">
+            <i data-lucide="layout-dashboard"></i>
+            <span>HC Initiatives Tracker</span>
+        </div>
+
+        <a href="dashboard.html" class="nav-item">
+            <i data-lucide="layout-dashboard"></i> <span class="menu-text">Dashboard Overview</span>
+        </a>
+        <a href="projects.html" class="nav-item">
+            <i data-lucide="folder-kanban"></i> <span class="menu-text">Initiatives</span>
+        </a>
+        <a href="owners.html" class="nav-item active">
+            <i data-lucide="users"></i> <span class="menu-text">Owners</span>
+        </a>
+        <a href="analytics.html" class="nav-item">
+            <i data-lucide="bar-chart-2"></i> <span class="menu-text">Analytic</span>
+        </a>
+        <a href="notifications.html" class="nav-item">
+            <i data-lucide="bell"></i> <span class="menu-text">Notifications</span>
+            <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+        </a>
+        <a href="timeline.html" class="nav-item">
+            <i data-lucide="calendar"></i> <span class="menu-text">Timeline</span>
+        </a>
+        <a href="approvals.html" class="nav-item" id="approvalsLink">
+            <i data-lucide="check-circle"></i> <span class="menu-text">Approvals</span>
+            <span id="approvalsBadge" class="notification-badge" style="display: none;">0</span>
+        </a>
+        <a href="user-management.html" class="nav-item">
+            <i data-lucide="user-cog"></i> <span class="menu-text">User Management</span>
+        </a>
+        <a href="settings.html" class="nav-item">
+            <i data-lucide="settings"></i> <span class="menu-text">Setting</span>
+        </a>
+
+        <!-- Logout Button at Bottom -->
+        <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <a href="#" onclick="confirmLogout(event)" class="nav-item" style="color: #ff0055;">
+                <i data-lucide="log-out"></i> <span class="menu-text">Logout</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 10000; align-items: center; justify-content: center;">
+        <div
+            style="background: linear-gradient(135deg, rgba(21, 21, 34, 0.95), rgba(26, 31, 46, 0.95)); border-radius: 16px; max-width: 400px; width: 90%; padding: 30px; border: 1px solid rgba(255, 0, 85, 0.3); box-shadow: 0 20px 60px rgba(255, 0, 85, 0.4);">
+            <h3 style="margin: 0 0 15px 0; font-size: 20px; color: white; text-align: center;">Confirm Logout</h3>
+            <p style="margin: 0 0 25px 0; color: var(--text-muted); text-align: center;">Are you sure you want to
+                logout?</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button onclick="proceedLogout()"
+                    style="padding: 12px; background: linear-gradient(135deg, #ff0055, #ff8800); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">Yes,
+                    Logout</button>
+                <button onclick="closeLogoutModal()"
+                    style="padding: 12px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content fade-in-up">
+        <h1 style="margin-bottom: 30px;">Initiatives Owner</h1>
+
+        <div class="content-wrapper">
+            <!-- Left: Entity Selector -->
+            <aside class="entity-sidebar">
+
+                <div class="entity-group-title">Holding</div>
+                <button class="entity-btn active" onclick="selectEntity('ptpn3', this)">PT Perkebunan Nusantara III
+                    (Persero)</button>
+
+                <div class="entity-group-title">Subholding</div>
+                <button class="entity-btn" onclick="selectEntity('ptpn1', this)">PT Perkebunan Nusantara I</button>
+                <button class="entity-btn" onclick="selectEntity('ptpn4', this)">PT Perkebunan Nusantara IV</button>
+                <button class="entity-btn" onclick="selectEntity('sgn', this)">PT Sinergi Gula Nusantara</button>
+
+                <div class="entity-group-title">Anak Perusahaan</div>
+                <button class="entity-btn" onclick="selectEntity('lpp', this)">PT LPP Agro Nusantara</button>
+                <button class="entity-btn" onclick="selectEntity('medika', this)">PT Sri Pamela Medika
+                    Nusantara</button>
+                <button class="entity-btn" onclick="selectEntity('rpn', this)">PT Riset Perkebunan Nusantara</button>
+                <button class="entity-btn" onclick="selectEntity('kpbn', this)">PT Kharisma Pemasaran Bersama
+                    Nusantara</button>
+                <button class="entity-btn" onclick="selectEntity('bio', this)">PT Bio Industri Nusantara</button>
+                <button class="entity-btn" onclick="selectEntity('kin', this)">PT Kawasan Industri Nusantara</button>
+                <button class="entity-btn" onclick="selectEntity('ikn', this)">PT Industri Karet Nusantara</button>
+
+            </aside>
+
+            <!-- Right: Owner Grid -->
+            <div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 id="selectedEntityTitle" style="font-size: 18px; color: white; margin: 0;">PT Perkebunan
+                        Nusantara III (Persero)</h2>
+                    <button class="btn btn-gradient" onclick="goToInsertInitiative()"
+                        style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 6px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; color: white; background: linear-gradient(90deg, #00eebb, #0088ff);">
+                        <i data-lucide="plus-circle" style="width: 16px;"></i> Insert Initiative
+                    </button>
+                </div>
+                <div class="owner-grid" id="ownerContainer">
+                    <!-- Dynamic Content -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Project Modal -->
+    <div id="projectModal" class="modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; overflow-y: auto;">
+        <div class="modal-content"
+            style="background: var(--bg-card); padding: 30px; border-radius: 12px; border: 1px solid var(--primary); width: 700px; max-height: 90vh; overflow-y: auto; margin: 20px 0;">
+            <h2 id="modalTitle"
+                style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
+                Insert Initiative</h2>
+            <form id="projectForm" onsubmit="handleProjectSubmit(event)">
+                <input type="hidden" id="projectId">
+
+                <!-- Main Initiative Details -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div style="grid-column: span 2;">
+                        <label
+                            style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Strategic
+                            Initiative Name</label>
+                        <input type="text" id="pName" required placeholder="e.g. Digital Transformation 2025"
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; border-radius: 6px;">
+                    </div>
+
+                    <div>
+                        <label
+                            style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Entity
+                            Owner</label>
+                        <select id="projectEntity" required
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; border-radius: 6px;">
+                            <!-- Populated by JS -->
+                        </select>
+                        <input type="text" id="projectEntityText" readonly
+                            style="display: none; width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: #888; border-radius: 6px; cursor: not-allowed;">
+                    </div>
+
+                    <div>
+                        <label
+                            style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Initiatives
+                            Owner</label>
+                        <input type="text" id="projectOwner" required placeholder="e.g. Strategi & Kebijakan"
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; border-radius: 6px;">
+                    </div>
+
+                    <div>
+                        <label
+                            style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Status</label>
+                        <select id="pStatus" required
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; border-radius: 6px;">
+                            <option value="Not Started" style="background: #1a1a2e; color: white;">Not Started</option>
+                            <option value="On Going" style="background: #1a1a2e; color: white;">On Going</option>
+                            <option value="Done" style="background: #1a1a2e; color: white;">Done</option>
+                            <option value="Hold" style="background: #1a1a2e; color: white;">Hold</option>
+                            <option value="Carry Over" style="background: #1a1a2e; color: white;">Carry Over</option>
+                            <option value="Cancelled" style="background: #1a1a2e; color: white;">Cancelled</option>
+                        </select>
+                    </div>
+
+                    <!-- HIDDEN: Urgency (Auto-calculated from Due Date) -->
+                    <input type="hidden" id="pUrgency" value="Low">
+
+                    <div>
+                        <label
+                            style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Due
+                            Date</label>
+                        <input type="date" id="pDueDate" required
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; border-radius: 6px;">
+                    </div>
+
+                    <div>
+                        <label
+                            style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Manual
+                            Progress (%)</label>
+                        <input type="number" id="pProgress" min="0" max="100" value="0"
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; border-radius: 6px;">
+                    </div>
+
+                    <!-- NEW: Budget & Realization -->
+                    <div>
+                        <label
+                            style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Anggaran
+                            RKAP (Rp)</label>
+                        <input type="number" id="pBudget" placeholder="0"
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; border-radius: 6px;">
+                    </div>
+                    <div>
+                        <label
+                            style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Realisasi
+                            Biaya (Rp)</label>
+                        <input type="number" id="pCost" placeholder="0"
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; border-radius: 6px;">
+                    </div>
+
+                    <div style="grid-column: span 2;">
+                        <label
+                            style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Output</label>
+                        <textarea id="pOutput" placeholder="Describe the expected output or deliverables..." rows="3"
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; border-radius: 6px; font-family: inherit; resize: vertical;"></textarea>
+                    </div>
+                </div>
+
+                <!-- Leading/Lagging Indicators Section -->
+                <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                    <div class="flex justify-between items-center" style="margin-bottom: 15px;">
+                        <h3 style="font-size: 16px; color: var(--primary);">Leading & Lagging Indicators</h3>
+                        <button type="button" class="btn" onclick="addIndicatorField()"
+                            style="font-size: 12px; padding: 5px 10px; border: 1px solid var(--primary); color: var(--primary); background: transparent;">
+                            + Add Indicator
+                        </button>
+                    </div>
+
+                    <!-- Header Row -->
+                    <div
+                        style="display: grid; grid-template-columns: 100px 2fr 100px 100px 40px; gap: 10px; margin-bottom: 10px; padding: 0 10px;">
+                        <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Type</span>
+                        <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Metric</span>
+                        <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">UoM</span>
+                        <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Target</span>
+                        <span></span>
+                    </div>
+
+                    <div id="indicatorsContainer" style="display: flex; flex-direction: column; gap: 10px;">
+                        <!-- Dynamic Fields will go here -->
+                    </div>
+                </div>
+
+                <!-- Sub Initiatives Section -->
+                <div style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                    <div class="flex justify-between items-center" style="margin-bottom: 15px;">
+                        <h3 style="font-size: 16px; color: var(--primary);">Key Activities</h3>
+                        <button type="button" class="btn" onclick="addSubInitiativeField()"
+                            style="font-size: 12px; padding: 5px 10px; border: 1px solid var(--primary); color: var(--primary); background: transparent;">
+                            + Add Key Activity
+                        </button>
+                    </div>
+
+                    <div id="subInitiativesContainer" style="display: flex; flex-direction: column; gap: 15px;">
+                        <!-- Dynamic Fields will go here -->
+                    </div>
+                </div>
+
+                <div class="flex justify-between"
+                    style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <button type="button" class="btn"
+                        style="background: transparent; border: 1px solid #ff0055; color: #ff0055;"
+                        onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-gradient">Save Project</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/entity-filter.js"></script>
+    <script src="js/rbac.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/menu-names.js"></script>
+    <script src="js/logout.js"></script>
+    <script src="js/projects.js"></script>
+    <script src="js/notifications.js"></script>
+    <script>
+        lucide.createIcons();
+
+        // Data Logic
+        // Use global 'initiatives' variable from projects.js
+        // const allInitiatives = initiatives; 
+
+        // Stats Helper
+        function getStatsForOwner(ownerName) {
+            // Use global 'initiatives'
+            const ownerProjects = initiatives.filter(i => i.owner === ownerName);
+            let done = 0;
+            let ongoing = 0;
+
+            ownerProjects.forEach(p => {
+                if (p.status === 'Completed' || p.progress === 100) done++;
+                else ongoing++;
+            });
+
+            return {
+                total: ownerProjects.length,
+                done,
+                active: ownerProjects.length - done
+            };
+        }
+
+        // Listen for updates from projects.js
+        window.addEventListener('initiatives-updated', () => {
+            // Refresh current view to update stats
+            selectEntity(currentSelectedEntity, document.querySelector('.entity-btn.active'));
+        });
+
+        // Mapping: Entity ID -> List of Owners
+        const ENTITY_OWNERS = {
+            'ptpn3': PROJECT_OWNERS, // The existing owners from data.js
+            'default': [] // No data for others yet
+        };
+
+        const ENTITY_NAMES = {
+            'ptpn3': 'PT Perkebunan Nusantara III (Persero)',
+            'ptpn1': 'PT Perkebunan Nusantara I',
+            'ptpn4': 'PT Perkebunan Nusantara IV',
+            'sgn': 'PT Sinergi Gula Nusantara',
+            'lpp': 'PT LPP Agro Nusantara',
+            'medika': 'PT Sri Pamela Medika Nusantara',
+            'rpn': 'PT Riset Perkebunan Nusantara',
+            'kpbn': 'PT Kharisma Pemasaran Bersama Nusantara',
+            'bio': 'PT Bio Industri Nusantara',
+            'kin': 'PT Kawasan Industri Nusantara',
+            'ikn': 'PT Industri Karet Nusantara'
+        };
+
+        // Get user info for filtering
+        const userInfo = window.EntityFilter ? window.EntityFilter.getCurrentUserInfo() : { isAdmin: true, entity: null };
+
+        // Initial State - set to user's entity if not admin
+        let currentSelectedEntity = userInfo.isAdmin ? 'ptpn3' : (userInfo.entity || 'ptpn1');
+
+        // Hide entity sidebar for regular users
+        if (!userInfo.isAdmin) {
+            const entitySidebar = document.querySelector('.entity-sidebar');
+            if (entitySidebar) entitySidebar.style.display = 'none';
+
+            const contentWrapper = document.querySelector('.content-wrapper');
+            if (contentWrapper) contentWrapper.style.gridTemplateColumns = '1fr';
+
+            // Auto-select user's entity
+            if (userInfo.entity) {
+                currentSelectedEntity = userInfo.entity;
+            }
+        }
+
+        function selectEntity(entityId, btnElement) {
+            currentSelectedEntity = entityId;
+
+            // Update Title
+            const entityName = ENTITY_NAMES[entityId] || 'Entity';
+            document.getElementById('selectedEntityTitle').innerText = entityName;
+
+            // Update Active State
+            document.querySelectorAll('.entity-btn').forEach(b => b.classList.remove('active'));
+            if (btnElement) btnElement.classList.add('active');
+
+            // --- INTEGRATION LOGIC START ---
+            // Get all initiatives for the selected entity
+            const entityInitiatives = initiatives.filter(i => (i.entity || userInfo.entity || 'ptpn1') === entityId);
+
+            // Get unique owners who have initiatives in this entity
+            const ownersWithInitiatives = [...new Set(
+                entityInitiatives
+                    .map(i => i.owner)
+                    .filter(o => o && o.trim() !== "") // Remove empty or null owners
+            )].sort();
+
+            // For admin: show only owners with initiatives
+            // For users: show only their own initiatives' owners
+            const uniqueOwners = userInfo.isAdmin
+                ? ownersWithInitiatives
+                : ownersWithInitiatives.filter(owner => {
+                    // Filter to only show owners that the user has initiatives with
+                    return entityInitiatives.some(i => i.owner === owner && i.createdBy === userInfo.username);
+                });
+            // --- INTEGRATION LOGIC END ---
+
+            renderOwners(uniqueOwners);
+        }
+
+        function renderOwners(ownerList) {
+            const container = document.getElementById('ownerContainer');
+            container.innerHTML = '';
+
+            if (!ownerList || ownerList.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <i data-lucide="folder-open" style="width: 48px; height: 48px; margin-bottom: 10px; opacity: 0.5;"></i>
+                        <h3>No Initiatives Owners Found</h3>
+                        <p style="font-size: 14px;">There are no recorded owners for this entity yet.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            ownerList.forEach(owner => {
+                const stats = getStatsForOwner(owner);
+                const card = document.createElement('div');
+                card.className = 'owner-card';
+                card.style.cursor = 'pointer'; // Make it look clickable
+                // Add Click Handler
+                card.onclick = () => {
+                    window.location.href = `projects.html?entity=${currentSelectedEntity}&filterOwner=${encodeURIComponent(owner)}`;
+                };
+
+                // Calculate statistics
+                const ownerInitiatives = initiatives.filter(i => i.owner === owner);
+                const totalInitiatives = ownerInitiatives.length;
+                const totalKeyActivities = ownerInitiatives.reduce((sum, init) => sum + (init.subInitiatives ? init.subInitiatives.length : 0), 0);
+
+                // Calculate average progress
+                const avgProgress = totalInitiatives > 0
+                    ? Math.round(ownerInitiatives.reduce((sum, init) => sum + (init.progress || 0), 0) / totalInitiatives)
+                    : 0;
+
+                card.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:start;">
+                        <div class="owner-name">${owner.replace('Sub Divisi ', '')}</div>
+                        <i data-lucide="briefcase" style="color: var(--primary); width: 20px;"></i>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div style="margin: 12px 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Team Progress</span>
+                            <span style="font-size: 12px; font-weight: 700; color: #00f2ea;">${avgProgress}%</span>
+                        </div>
+                        <div style="width: 100%; height: 8px; background: rgba(0, 242, 234, 0.1); border-radius: 10px; overflow: hidden; position: relative;">
+                            <div style="height: 100%; width: ${avgProgress}%; background: linear-gradient(90deg, #0088ff, #00f2ea); border-radius: 10px; transition: width 0.5s ease; box-shadow: 0 0 10px rgba(0, 242, 234, 0.5);"></div>
+                        </div>
+                    </div>
+
+                    <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 15px 0;"></div>
+
+                    <!-- Modern Stats -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <!-- Total Initiatives -->
+                        <div style="background: linear-gradient(135deg, rgba(0, 136, 255, 0.1), rgba(0, 136, 255, 0.05)); border: 1px solid rgba(0, 136, 255, 0.3); border-radius: 8px; padding: 10px; position: relative; overflow: hidden;">
+                            <div style="position: absolute; top: -10px; right: -10px; width: 40px; height: 40px; background: radial-gradient(circle, rgba(0, 136, 255, 0.2), transparent); border-radius: 50%;"></div>
+                            <div style="font-size: 10px; color: rgba(0, 136, 255, 0.8); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Initiatives</div>
+                            <div style="font-size: 20px; font-weight: 700; color: #0088ff; text-shadow: 0 0 10px rgba(0, 136, 255, 0.5);">${totalInitiatives}</div>
+                        </div>
+                        
+                        <!-- Total Key Activities -->
+                        <div style="background: linear-gradient(135deg, rgba(255, 191, 0, 0.1), rgba(255, 191, 0, 0.05)); border: 1px solid rgba(255, 191, 0, 0.3); border-radius: 8px; padding: 10px; position: relative; overflow: hidden;">
+                            <div style="position: absolute; top: -10px; right: -10px; width: 40px; height: 40px; background: radial-gradient(circle, rgba(255, 191, 0, 0.2), transparent); border-radius: 50%;"></div>
+                            <div style="font-size: 10px; color: rgba(255, 191, 0, 0.8); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Activities</div>
+                            <div style="font-size: 20px; font-weight: 700; color: #ffbf00; text-shadow: 0 0 10px rgba(255, 191, 0, 0.5);">${totalKeyActivities}</div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+
+
+        function goToInsertInitiative() {
+            openModal();
+        }
+
+
+        // Initial Load - use user's entity
+        selectEntity(currentSelectedEntity, document.querySelector(`.entity-btn[data-entity="${currentSelectedEntity}"]`));
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strategic Timeline - HC Project Tracker</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Horizontal Timeline Styles */
+        .timeline-wrapper {
+            overflow-x: auto;
+            padding: 40px 20px;
+            /* Hide scrollbar structure but allow scroll */
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary) var(--bg-card);
+        }
+
+        .timeline-wrapper::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .timeline-wrapper::-webkit-scrollbar-track {
+            background: var(--bg-card);
+        }
+
+        .timeline-wrapper::-webkit-scrollbar-thumb {
+            background-color: var(--primary);
+            border-radius: 4px;
+        }
+
+        .timeline-container {
+            display: flex;
+            gap: 40px;
+            position: relative;
+            min-width: min-content;
+            padding-top: 20px;
+            /* Space for the line */
+        }
+
+        /* Horizontal Line */
+        .timeline-container::before {
+            content: '';
+            position: absolute;
+            top: 60px;
+            /* Align with dots */
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 0;
+        }
+
+        .timeline-item {
+            position: relative;
+            min-width: 300px;
+            max-width: 300px;
+            padding-top: 80px;
+            /* Space for line/dot */
+        }
+
+        /* Dot */
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            top: 53px;
+            /* Center on line (60px - 7px) */
+            left: 20px;
+            width: 14px;
+            height: 14px;
+            background: var(--bg-card);
+            border: 2px solid var(--primary);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .timeline-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+
+        .timeline-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 5;
+        }
+
+        /* Connector Line to Dot */
+        .timeline-card::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 26px;
+            width: 2px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Date Badge floating above */
+        .date-badge {
+            position: absolute;
+            top: 20px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .filter-bar {
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .filter-select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .filter-select option {
+            background-color: white;
+            color: black;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Particle Grid Background -->
+    <div class="particle-bg"></div>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="logo">
+            <i data-lucide="layout-dashboard"></i>
+            <span>HC Initiatives Tracker</span>
+        </div>
+        <a href="dashboard.html" class="nav-item">
+            <i data-lucide="layout-dashboard"></i> <span class="menu-text">Dashboard Overview</span>
+        </a>
+        <a href="projects.html" class="nav-item">
+            <i data-lucide="folder-kanban"></i> <span class="menu-text">Initiatives</span>
+        </a>
+        <a href="owners.html" class="nav-item">
+            <i data-lucide="users"></i> <span class="menu-text">Owners</span>
+        </a>
+        <a href="analytics.html" class="nav-item">
+            <i data-lucide="bar-chart-2"></i> <span class="menu-text">Analytic</span>
+        </a>
+        <a href="notifications.html" class="nav-item">
+            <i data-lucide="bell"></i> <span class="menu-text">Notifications</span>
+            <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+        </a>
+        <a href="timeline.html" class="nav-item active">
+            <i data-lucide="calendar"></i> <span class="menu-text">Timeline</span>
+        </a>
+        <a href="approvals.html" class="nav-item" id="approvalsLink">
+            <i data-lucide="check-circle"></i> <span class="menu-text">Approvals</span>
+            <span id="approvalBadge" class="notification-badge" style="display: none;">0</span>
+        </a>
+        <a href="user-management.html" class="nav-item">
+            <i data-lucide="user-cog"></i> <span class="menu-text">User Management</span>
+        </a>
+        <a href="settings.html" class="nav-item">
+            <i data-lucide="settings"></i> <span class="menu-text">Setting</span>
+        </a>
+
+        <!-- Logout Button at Bottom -->
+        <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <a href="#" onclick="confirmLogout(event)" class="nav-item" style="color: #ff0055;">
+                <i data-lucide="log-out"></i> <span class="menu-text">Logout</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 10000; align-items: center; justify-content: center;">
+        <div
+            style="background: linear-gradient(135deg, rgba(21, 21, 34, 0.95), rgba(26, 31, 46, 0.95)); border-radius: 16px; max-width: 400px; width: 90%; padding: 30px; border: 1px solid rgba(255, 0, 85, 0.3); box-shadow: 0 20px 60px rgba(255, 0, 85, 0.4);">
+            <h3 style="margin: 0 0 15px 0; font-size: 20px; color: white; text-align: center;">Confirm Logout</h3>
+            <p style="margin: 0 0 25px 0; color: var(--text-muted); text-align: center;">Are you sure you want to
+                logout?</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button onclick="proceedLogout()"
+                    style="padding: 12px; background: linear-gradient(135deg, #ff0055, #ff8800); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">Yes,
+                    Logout</button>
+                <button onclick="closeLogoutModal()"
+                    style="padding: 12px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content fade-in-up">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h1>Strategic Timeline</h1>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="filter-bar">
+            <div style="display:flex; align-items:center; gap:8px; font-size:14px; color:var(--text-muted);">
+                <i data-lucide="filter" style="width:16px;"></i> Filter:
+            </div>
+
+            <select id="filterEntity" class="filter-select" onchange="renderTimeline()" style="max-width: 150px;">
+                <option value="all">All Entities</option>
+                <!-- JS Populated -->
+            </select>
+            <div style="width: 1px; background: rgba(255,255,255,0.2); height: 20px;"></div>
+            <select id="filterMonth" class="filter-select" onchange="renderTimeline()">
+                <option value="all">All Months</option>
+                <option value="0">January</option>
+                <option value="1">February</option>
+                <option value="2">March</option>
+                <option value="3">April</option>
+                <option value="4">May</option>
+                <option value="5">June</option>
+                <option value="6">July</option>
+                <option value="7">August</option>
+                <option value="8">September</option>
+                <option value="9">October</option>
+                <option value="10">November</option>
+                <option value="11">December</option>
+            </select>
+
+            <select id="filterYear" class="filter-select" onchange="renderTimeline()">
+                <option value="all">All Years</option>
+                <!-- JS will populate years -->
+            </select>
+
+            <button onclick="resetFilters()"
+                style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:13px; text-decoration:underline;">Reset</button>
+        </div>
+
+        <div class="timeline-wrapper">
+            <div class="timeline-container" id="timelineContainer">
+                <!-- Dynamic Content -->
+                <div style="text-align: center; color: var(--text-muted); padding: 40px; width:100%;">Loading
+                    Timeline...</div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/entity-filter.js"></script>
+    <script src="js/rbac.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/menu-names.js"></script>
+    <script src="js/logout.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            populateYears();
+            renderTimeline();
+            lucide.createIcons();
+        });
+
+        function populateYears() {
+            const currentYear = new Date().getFullYear();
+            const yearSelect = document.getElementById('filterYear');
+
+            // Add range from -1 to +3 years
+            for (let i = -1; i <= 3; i++) {
+                const y = currentYear + i;
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.innerText = y;
+                if (y === currentYear) opt.selected = true; // Default to current year? No, maybe all. Let's default to All for broad view.
+                // Or user requested filter, defaulting to ALL is safer so they see data.
+                opt.selected = false;
+                yearSelect.appendChild(opt);
+            }
+            // Let's set default back to 'all' to ensure visibility
+            yearSelect.value = 'all';
+        }
+
+        function resetFilters() {
+            document.getElementById('filterMonth').value = 'all';
+            document.getElementById('filterYear').value = 'all';
+            renderTimeline();
+        }
+
+        // Get user info for filtering
+        const userInfo = window.EntityFilter ? window.EntityFilter.getCurrentUserInfo() : { isAdmin: true, entity: null };
+
+        // Hide entity filter for regular users
+        if (!userInfo.isAdmin) {
+            const entityFilter = document.getElementById('filterEntity');
+            if (entityFilter) {
+                entityFilter.closest('div').style.display = 'none';
+                // Hide the divider after entity select
+                const dividers = document.querySelectorAll('.filter-bar div[style*="width: 1px"]');
+                if (dividers[0]) dividers[0].style.display = 'none';
+            }
+        }
+
+        function renderTimeline() {
+            const container = document.getElementById('timelineContainer');
+            const monthFilter = document.getElementById('filterMonth').value;
+            const yearFilter = document.getElementById('filterYear').value;
+
+            container.innerHTML = '';
+
+            // Load Data
+            const rawInitiatives = JSON.parse(localStorage.getItem('initiatives')) || MOCK_INITIATIVES;
+
+            // Apply entity filtering for regular users
+            const initiatives = userInfo.isAdmin ? rawInitiatives : (window.EntityFilter ? window.EntityFilter.filterInitiativesByUserEntity(rawInitiatives) : rawInitiatives);
+
+            // Flatten Items
+            let timelineItems = [];
+
+            initiatives.forEach(init => {
+                const ent = init.entity || 'ptpn3'; // Default
+                if (init.dueDate) {
+                    timelineItems.push({
+                        type: 'Initiative',
+                        name: init.name,
+                        date: init.dueDate,
+                        owner: init.owner,
+                        status: init.status,
+                        parent: null,
+                        entity: ent,
+                        progress: init.progress || 0
+                    });
+                }
+
+                if (init.subInitiatives) {
+                    init.subInitiatives.forEach(sub => {
+                        if (sub.dueDate) {
+                            timelineItems.push({
+                                type: 'Key Activity',
+                                name: sub.name,
+                                date: sub.dueDate,
+                                owner: init.owner,
+                                status: sub.progress === 100 ? 'Completed' : 'On Going',
+                                parent: init.name,
+                                entity: ent, // Inherit
+                                progress: sub.progress || 0
+                            });
+                        }
+                    });
+                }
+            });
+
+            // Filter
+            timelineItems = timelineItems.filter(item => {
+                const d = new Date(item.date);
+                const mMatch = monthFilter === 'all' || d.getMonth() === parseInt(monthFilter);
+                const yMatch = yearFilter === 'all' || d.getFullYear() === parseInt(yearFilter);
+                return mMatch && yMatch;
+            });
+
+            // Sort
+            timelineItems.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            if (timelineItems.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding: 40px; color:var(--text-muted); width:100%;">No items found for selected period.</div>`;
+                return;
+            }
+
+            // Render
+            timelineItems.forEach((item) => {
+                const dateObj = new Date(item.date);
+                const datePretty = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+                // Entity Name
+                const entityName = (typeof ENTITIES !== 'undefined' ? ENTITIES[item.entity] : item.entity) || '-';
+
+                // Risk Logic
+                let risk = 'Low';
+                let riskColor = '#00ff9d'; // Green
+                let riskBg = 'rgba(0, 255, 157, 0.1)';
+
+                const daysLeft = (dateObj - new Date()) / (1000 * 60 * 60 * 24);
+                const isDone = item.status === 'Completed' || item.status === 'Done';
+
+                if (!isDone) {
+                    if (daysLeft < 30) {
+                        risk = 'High';
+                        riskColor = '#ff0055'; // Red
+                        riskBg = 'rgba(255, 0, 85, 0.1)';
+                    } else if (daysLeft < 90) {
+                        risk = 'Medium';
+                        riskColor = '#ffbf00'; // Yellow
+                        riskBg = 'rgba(255, 191, 0, 0.1)';
+                    }
+                }
+
+                // Color coding tags
+                const isInit = item.type === 'Initiative';
+                const tagColor = isInit ? '#00eebb' : '#0088ff';
+                const tagBg = isInit ? 'rgba(0, 238, 187, 0.1)' : 'rgba(0, 136, 255, 0.1)';
+
+                const div = document.createElement('div');
+                div.className = 'timeline-item';
+                div.innerHTML = `
+                    <div class="date-badge">${datePretty}</div>
+                    
+                    <div class="timeline-card">
+                        <!-- Header: Type Badge & Risk Badge -->
+                        <div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items:center;">
+                            <span style="font-size:10px; font-weight:bold; padding:2px 8px; border-radius:10px; background:${tagBg}; color:${tagColor};">
+                                ${item.type}
+                            </span>
+                            
+                            <!-- Risk Badge -->
+                             <span style="font-size:10px; font-weight:bold; padding:2px 8px; border-radius:4px; background:${riskBg}; color:${riskColor}; border:1px solid ${riskColor};">
+                                ${risk} Risk
+                            </span>
+                        </div>
+
+                        <h4 style="margin:0 0 5px 0; font-size:14px; line-height:1.4;">${item.name}</h4>
+                        
+                        ${item.parent ? `<div style="font-size:11px; color:#888; margin-bottom:8px;">Root: ${item.parent}</div>` : ''}
+                        
+                        <!-- Owner & Entity -->
+                        <div style="font-size:11px; color:var(--text-muted); display:flex; flex-direction:column; gap:4px; margin-bottom:10px;">
+                            <div style="display:flex; gap:5px; align-items:center;">
+                                <i data-lucide="user" style="width:12px;"></i> ${item.owner}
+                            </div>
+                             <div style="display:flex; gap:5px; align-items:center; color: #888;">
+                                <i data-lucide="building" style="width:12px;"></i> ${entityName}
+                            </div>
+                        </div>
+
+                         <!-- Progress Bar -->
+                        <div style="margin-top:auto;">
+                            <div style="display:flex; justify-content:space-between; font-size:10px; color:#ccc; margin-bottom:2px;">
+                                <span>Progress</span>
+                                <span>${item.progress}%</span>
+                            </div>
+                            <div style="width:100%; height:4px; background:rgba(255,255,255,0.1); border-radius:2px;">
+                                <div style="height:100%; width:${item.progress}%; background:${tagColor}; border-radius:2px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            lucide.createIcons();
+        }
+
+        // --- NEW: Populate Entity Filter ---
+        function populateTimelineEntityFilter() {
+            const select = document.getElementById('filterEntity');
+            if (typeof ENTITIES !== 'undefined') {
+                for (const [key, value] of Object.entries(ENTITIES)) {
+                    const opt = document.createElement('option');
+                    opt.value = key;
+                    opt.innerText = value;
+                    select.appendChild(opt);
+                }
+            }
+        }
+
+        // --- NEW: Modal Logic ---
+        function openDetailModal(item) {
+            const modal = document.getElementById('detailModal');
+            document.getElementById('mName').innerText = item.name;
+            document.getElementById('mType').innerText = item.type;
+
+            // Entity Name
+            const entityName = (typeof ENTITIES !== 'undefined' ? ENTITIES[item.entity] : item.entity) || '-';
+            document.getElementById('mEntity').innerText = entityName;
+            document.getElementById('mOwner').innerText = item.owner;
+            document.getElementById('mStatus').innerText = item.status;
+
+            const d = new Date(item.date);
+            document.getElementById('mDate').innerText = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+            document.getElementById('mProgress').innerText = item.progress + '%';
+            document.getElementById('mProgressText').innerText = item.progress + '% Completed';
+            document.getElementById('mProgressBar').style.width = item.progress + '%';
+
+            // Show Parent if Key Activity
+            const rootEl = document.getElementById('mRootContainer');
+            if (item.parent) {
+                rootEl.style.display = 'block';
+                document.getElementById('mRoot').innerText = item.parent;
+            } else {
+                rootEl.style.display = 'none';
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').style.display = 'none';
+        }
+
+        // Override renderTimeline to include Entity Filter and Click Handler
+        const originalRender = renderTimeline;
+        renderTimeline = function () {
+            const container = document.getElementById('timelineContainer');
+            const monthFilter = document.getElementById('filterMonth').value;
+            const yearFilter = document.getElementById('filterYear').value;
+            const entityFilter = document.getElementById('filterEntity').value;
+
+            container.innerHTML = '';
+
+            // Load Data
+            const rawInitiatives = JSON.parse(localStorage.getItem('initiatives')) || MOCK_INITIATIVES;
+
+            // Apply entity filtering for regular users
+            const initiatives = userInfo.isAdmin ? rawInitiatives : (window.EntityFilter ? window.EntityFilter.filterInitiativesByUserEntity(rawInitiatives) : rawInitiatives);
+
+            // Flatten Items
+            let timelineItems = [];
+
+            initiatives.forEach(init => {
+                const ent = init.entity || 'ptpn3';
+                if (init.dueDate) {
+                    timelineItems.push({
+                        type: 'Initiative',
+                        name: init.name,
+                        date: init.dueDate,
+                        owner: init.owner,
+                        status: init.status,
+                        parent: null,
+                        entity: ent,
+                        progress: init.progress || 0,
+                        raw: init
+                    });
+                }
+
+                if (init.subInitiatives) {
+                    init.subInitiatives.forEach(sub => {
+                        if (sub.dueDate) {
+                            timelineItems.push({
+                                type: 'Key Activity',
+                                name: sub.name,
+                                date: sub.dueDate,
+                                owner: init.owner,
+                                status: sub.progress === 100 ? 'Completed' : 'On Going',
+                                parent: init.name,
+                                entity: ent,
+                                progress: sub.progress || 0,
+                                raw: sub
+                            });
+                        }
+                    });
+                }
+            });
+
+            // Filter
+            timelineItems = timelineItems.filter(item => {
+                const d = new Date(item.date);
+                const mMatch = monthFilter === 'all' || d.getMonth() === parseInt(monthFilter);
+                const yMatch = yearFilter === 'all' || d.getFullYear() === parseInt(yearFilter);
+                const eMatch = entityFilter === 'all' || item.entity === entityFilter;
+                return mMatch && yMatch && eMatch;
+            });
+
+            // Sort
+            timelineItems.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            if (timelineItems.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding: 40px; color:var(--text-muted); width:100%;">No items found for selected period.</div>`;
+                return;
+            }
+
+            // Render
+            timelineItems.forEach((item) => {
+                const dateObj = new Date(item.date);
+                const datePretty = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+                const entityName = (typeof ENTITIES !== 'undefined' ? ENTITIES[item.entity] : item.entity) || '-';
+
+                // Risk Logic
+                let risk = 'Low';
+                let riskColor = '#00ff9d';
+                let riskBg = 'rgba(0, 255, 157, 0.1)';
+
+                const daysLeft = (dateObj - new Date()) / (1000 * 60 * 60 * 24);
+                const isDone = item.status === 'Completed' || item.status === 'Done';
+
+                if (!isDone) {
+                    if (daysLeft < 30) {
+                        risk = 'High';
+                        riskColor = '#ff0055';
+                        riskBg = 'rgba(255, 0, 85, 0.1)';
+                    } else if (daysLeft < 90) {
+                        risk = 'Medium';
+                        riskColor = '#ffbf00';
+                        riskBg = 'rgba(255, 191, 0, 0.1)';
+                    }
+                }
+
+                const isInit = item.type === 'Initiative';
+                const tagColor = isInit ? '#00eebb' : '#0088ff';
+                const tagBg = isInit ? 'rgba(0, 238, 187, 0.1)' : 'rgba(0, 136, 255, 0.1)';
+
+                const div = document.createElement('div');
+                div.className = 'timeline-item';
+                div.innerHTML = `
+                    <div class="date-badge">${datePretty}</div>
+                    
+                    <div class="timeline-card" style="cursor: pointer;" onclick='openDetailModal(${JSON.stringify(item).replace(/'/g, "&#39;")})'>
+                         <div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items:center;">
+                            <span style="font-size:10px; font-weight:bold; padding:2px 8px; border-radius:10px; background:${tagBg}; color:${tagColor};">
+                                ${item.type}
+                            </span>
+                             <span style="font-size:10px; font-weight:bold; padding:2px 8px; border-radius:4px; background:${riskBg}; color:${riskColor}; border:1px solid ${riskColor};">
+                                ${risk} Risk
+                            </span>
+                        </div>
+
+                        <h4 style="margin:0 0 5px 0; font-size:14px; line-height:1.4;">${item.name}</h4>
+                        
+                        ${item.parent ? `<div style="font-size:11px; color:#888; margin-bottom:8px;">Root: ${item.parent}</div>` : ''}
+                        
+                         <div style="font-size:11px; color:var(--text-muted); display:flex; flex-direction:column; gap:4px; margin-bottom:10px;">
+                            <div style="display:flex; gap:5px; align-items:center;">
+                                <i data-lucide="user" style="width:12px;"></i> ${item.owner}
+                            </div>
+                             <div style="display:flex; gap:5px; align-items:center; color: #888;">
+                                <i data-lucide="building" style="width:12px;"></i> ${entityName}
+                            </div>
+                        </div>
+
+                        <div style="margin-top:auto;">
+                            <div style="display:flex; justify-content:space-between; font-size:10px; color:#ccc; margin-bottom:2px;">
+                                <span>Progress</span>
+                                <span>${item.progress}%</span>
+                            </div>
+                            <div style="width:100%; height:4px; background:rgba(255,255,255,0.1); border-radius:2px;">
+                                <div style="height:100%; width:${item.progress}%; background:${tagColor}; border-radius:2px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            lucide.createIcons();
+        }
+
+        // Init Calls
+        populateTimelineEntityFilter();
+    </script>
+
+    <!-- Detail Modal -->
+    <div id="detailModal" class="modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center;">
+        <div class="modal-content"
+            style="background: var(--bg-card); padding: 30px; border-radius: 12px; border: 1px solid var(--primary); width: 600px; max-width: 90%;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
+                <div>
+                    <div id="mType"
+                        style="font-size: 11px; background: rgba(255,255,255,0.1); display: inline-block; padding: 2px 8px; border-radius: 4px; margin-bottom: 5px;">
+                        Type</div>
+                    <h2 id="mName" style="margin: 0; font-size: 18px;">Initiative Name</h2>
+                    <div id="mRootContainer"
+                        style="font-size: 12px; color: var(--text-muted); margin-top: 5px; display: none;">Root: <span
+                            id="mRoot"></span></div>
+                </div>
+                <button onclick="closeDetailModal()"
+                    style="background: none; border: none; color: white; cursor: pointer;">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 13px;">
+                <div>
+                    <label style="color: var(--text-muted); display: block; margin-bottom: 4px;">Entity</label>
+                    <div id="mEntity" style="font-weight: 500;">-</div>
+                </div>
+                <div>
+                    <label style="color: var(--text-muted); display: block; margin-bottom: 4px;">Owner</label>
+                    <div id="mOwner" style="font-weight: 500;">-</div>
+                </div>
+                <div>
+                    <label style="color: var(--text-muted); display: block; margin-bottom: 4px;">Due Date</label>
+                    <div id="mDate">-</div>
+                </div>
+                <div>
+                    <label style="color: var(--text-muted); display: block; margin-bottom: 4px;">Current Status</label>
+                    <div id="mStatus">-</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 25px;">
+                <label
+                    style="color: var(--text-muted); display: block; margin-bottom: 8px; font-size: 13px;">Progress</label>
+                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px;">
+                    <span id="mProgressText">0% Completed</span>
+                    <span id="mProgress" style="font-weight: bold;">0%</span>
+                </div>
+                <div
+                    style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+                    <div id="mProgressBar"
+                        style="width: 0%; height: 100%; background: var(--primary); transition: width 0.3s;"></div>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px; text-align: right;">
+                <button onclick="closeDetailModal()" class="btn btn-gradient" style="padding: 8px 20px;">Close</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

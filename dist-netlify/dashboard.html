@@ -1,0 +1,1973 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Overview - HC Project Tracker</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 100%;
+            background: var(--primary);
+        }
+
+        .stat-card.done::before {
+            background: var(--success);
+        }
+
+        .stat-card.ongoing::before {
+            background: var(--info);
+        }
+
+        .stat-card.cancelled::before {
+            background: var(--danger);
+        }
+
+        .stat-card.carryover::before {
+            background: var(--warning);
+        }
+
+        .stat-card.notstarted::before {
+            background: #888;
+        }
+
+        .stat-card.hold::before {
+            background: #ff8800;
+            /* Distinct Orange */
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .chart-header {
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Custom Multi-Select Dropdown */
+        .custom-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-trigger {
+            background: #ffffff;
+            /* Match existing Selects which appear white */
+            color: #333333;
+            /* Dark text */
+            border: 1px solid #ccc;
+            /* Standard border */
+            padding: 4px 8px;
+            /* Compact padding */
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            /* Match text-xs */
+            min-width: 110px;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 24px;
+            /* Fixed height */
+        }
+
+        .dropdown-trigger::after {
+            content: '▼';
+            font-size: 8px;
+            margin-left: 8px;
+            color: #333;
+        }
+
+        .checkbox-dropdown-menu {
+            display: none;
+            position: absolute;
+            background: #1e1e2d;
+            /* Dark bg */
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 10px;
+            z-index: 1000;
+            min-width: 150px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            max-height: 300px;
+            overflow-y: auto;
+            top: 100%;
+            left: 0;
+            margin-top: 5px;
+        }
+
+        .checkbox-dropdown-menu.show {
+            display: block;
+        }
+
+        .checkbox-dropdown-menu label {
+            display: block;
+            padding: 5px;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .checkbox-dropdown-menu label:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .checkbox-dropdown-menu hr {
+            border: 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 5px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Particle Grid Background -->
+    <div class="particle-bg"></div>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="logo">
+            <i data-lucide="layout-dashboard"></i>
+            <span>HC Initiatives Tracker</span>
+        </div>
+
+        <a href="dashboard.html" class="nav-item active">
+            <i data-lucide="layout-dashboard"></i> <span class="menu-text">Dashboard Overview</span>
+        </a>
+        <a href="projects.html" class="nav-item">
+            <i data-lucide="folder-kanban"></i> <span class="menu-text">Initiatives</span>
+        </a>
+        <a href="owners.html" class="nav-item">
+            <i data-lucide="users"></i> <span class="menu-text">Owners</span>
+        </a>
+        <a href="analytics.html" class="nav-item">
+            <i data-lucide="bar-chart-2"></i> <span class="menu-text">Analytic</span>
+        </a>
+        <a href="notifications.html" class="nav-item">
+            <i data-lucide="bell"></i> <span class="menu-text">Notifications</span>
+            <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+        </a>
+        <a href="timeline.html" class="nav-item">
+            <i data-lucide="calendar"></i> <span class="menu-text">Timeline</span>
+        </a>
+        <a href="approvals.html" class="nav-item" id="approvalsLink">
+            <i data-lucide="check-circle"></i> <span class="menu-text">Approvals</span>
+            <span id="approvalsBadge" class="notification-badge" style="display: none;">0</span>
+        </a>
+        <a href="user-management.html" class="nav-item">
+            <i data-lucide="user-cog"></i> <span class="menu-text">User Management</span>
+        </a>
+        <a href="settings.html" class="nav-item">
+            <i data-lucide="settings"></i> <span class="menu-text">Setting</span>
+        </a>
+
+        <!-- Logout Button at Bottom -->
+        <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <a href="#" onclick="confirmLogout(event)" class="nav-item" style="color: #ff0055;">
+                <i data-lucide="log-out"></i> <span class="menu-text">Logout</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 10000; align-items: center; justify-content: center;">
+        <div
+            style="background: linear-gradient(135deg, rgba(21, 21, 34, 0.95), rgba(26, 31, 46, 0.95)); border-radius: 16px; max-width: 400px; width: 90%; padding: 30px; border: 1px solid rgba(255, 0, 85, 0.3); box-shadow: 0 20px 60px rgba(255, 0, 85, 0.4);">
+            <h3 style="margin: 0 0 15px 0; font-size: 20px; color: white; text-align: center;">Confirm Logout</h3>
+            <p style="margin: 0 0 25px 0; color: var(--text-muted); text-align: center;">Are you sure you want to
+                logout?</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button onclick="proceedLogout()"
+                    style="padding: 12px; background: linear-gradient(135deg, #ff0055, #ff8800); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">Yes,
+                    Logout</button>
+                <button onclick="closeLogoutModal()"
+                    style="padding: 12px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Stats -->
+
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="flex justify-between items-center" style="margin-bottom: 20px;">
+            <div>
+                <h1 style="font-size: 24px; font-weight: 700; margin-bottom: 5px;">Dashboard Overview</h1>
+                <p style="color: var(--text-muted); font-size: 14px;">Monitor key performance indicators and progress
+                </p>
+            </div>
+
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <!-- Global Filter -->
+                <div id="globalFilterContainer"
+                    style="background: rgba(255,255,255,0.05); padding: 5px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; gap: 10px;">
+                    <select id="filterEntity" class="bg-transparent text-white border-none outline-none text-xs"
+                        style="max-width: 150px;">
+                        <option value="All" style="background: #1a1a2e; color: white;">All Entities</option>
+                        <!-- Populated by JS -->
+                    </select>
+                    <div id="entityDivider" style="width: 1px; background: rgba(255,255,255,0.2);"></div>
+                    <div class="custom-dropdown" id="monthDropdownContainer">
+                        <button class="dropdown-trigger" onclick="toggleMonthDropdown()" id="monthDropdownTrigger">All
+                            Months</button>
+                        <div class="checkbox-dropdown-menu" id="monthDropdownMenu">
+                            <label><input type="checkbox" value="All" onchange="toggleAllMonths(this)" checked> All
+                                Months</label>
+                            <hr>
+                            <label><input type="checkbox" value="0" class="month-check" onchange="updateMonthLabel()">
+                                January</label>
+                            <label><input type="checkbox" value="1" class="month-check" onchange="updateMonthLabel()">
+                                February</label>
+                            <label><input type="checkbox" value="2" class="month-check" onchange="updateMonthLabel()">
+                                March</label>
+                            <label><input type="checkbox" value="3" class="month-check" onchange="updateMonthLabel()">
+                                April</label>
+                            <label><input type="checkbox" value="4" class="month-check" onchange="updateMonthLabel()">
+                                May</label>
+                            <label><input type="checkbox" value="5" class="month-check" onchange="updateMonthLabel()">
+                                June</label>
+                            <label><input type="checkbox" value="6" class="month-check" onchange="updateMonthLabel()">
+                                July</label>
+                            <label><input type="checkbox" value="7" class="month-check" onchange="updateMonthLabel()">
+                                August</label>
+                            <label><input type="checkbox" value="8" class="month-check" onchange="updateMonthLabel()">
+                                September</label>
+                            <label><input type="checkbox" value="9" class="month-check" onchange="updateMonthLabel()">
+                                October</label>
+                            <label><input type="checkbox" value="10" class="month-check" onchange="updateMonthLabel()">
+                                November</label>
+                            <label><input type="checkbox" value="11" class="month-check" onchange="updateMonthLabel()">
+                                December</label>
+                        </div>
+                    </div>
+                    <div style="width: 1px; background: rgba(255,255,255,0.2);"></div>
+                    <select id="filterYear" class="bg-transparent text-white border-none outline-none text-xs">
+                        <option value="All" style="background: #1a1a2e; color: white;">All Years</option>
+                        <option value="2024" style="background: #1a1a2e; color: white;">2024</option>
+                        <option value="2025" style="background: #1a1a2e; color: white;">2025</option>
+                        <option value="2026" style="background: #1a1a2e; color: white;">2026</option>
+                        <option value="2027" style="background: #1a1a2e; color: white;">2027</option>
+                        <option value="2028" style="background: #1a1a2e; color: white;">2028</option>
+                        <option value="2029" style="background: #1a1a2e; color: white;">2029</option>
+                        <option value="2030" style="background: #1a1a2e; color: white;">2030</option>
+                        <option value="2031" style="background: #1a1a2e; color: white;">2031</option>
+                        <option value="2032" style="background: #1a1a2e; color: white;">2032</option>
+                        <option value="2033" style="background: #1a1a2e; color: white;">2033</option>
+                        <option value="2034" style="background: #1a1a2e; color: white;">2034</option>
+                        <option value="2035" style="background: #1a1a2e; color: white;">2035</option>
+                    </select>
+                    <button onclick="applyGlobalFilter()"
+                        style="background: var(--primary); border: none; border-radius: 4px; color: black; font-weight: bold; padding: 2px 8px; cursor: pointer; font-size: 11px;">Apply</button>
+                </div>
+
+                <!-- Manage Report Dropdown -->
+                <div class="dropdown" id="manageReportDropdown">
+                    <button class="btn btn-gradient" onclick="toggleDropdown()">
+                        <i data-lucide="layout"></i> Manage Report
+                    </button>
+                    <div class="dropdown-content">
+                        <div class="dropdown-item" onclick="toggleWidget('card-workload')">
+                            <span>Workload</span>
+                            <input type="checkbox" id="check-workload">
+                        </div>
+                        <div class="dropdown-item" onclick="toggleWidget('card-scurve')">
+                            <span>S-Curve</span>
+                            <input type="checkbox" id="check-scurve">
+                        </div>
+                        <div class="dropdown-item" onclick="toggleWidget('card-aging')">
+                            <span>Aging Analysis</span>
+                            <input type="checkbox" id="check-aging">
+                        </div>
+                        <div class="dropdown-item" onclick="toggleWidget('card-velocity')">
+                            <span>Monthly Velocity</span>
+                            <input type="checkbox" id="check-velocity">
+                        </div>
+                        <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 5px 0;">
+                        <div class="dropdown-item" onclick="toggleWidget('card-owner-dist')">
+                            <span>Owner Dist.</span>
+                            <input type="checkbox" id="check-owner-dist" checked>
+                        </div>
+                        <div class="dropdown-item" onclick="toggleWidget('card-risk')">
+                            <span>Risk Analysis</span>
+                            <input type="checkbox" id="check-risk" checked>
+                        </div>
+                        <div class="dropdown-item" onclick="toggleWidget('card-key-risk')">
+                            <span>Key Risk</span>
+                            <input type="checkbox" id="check-key-risk" checked>
+                        </div>
+                        <div class="dropdown-item" onclick="toggleWidget('card-key-effectiveness')">
+                            <span>Key Effectiveness</span>
+                            <input type="checkbox" id="check-key-effectiveness" checked>
+                        </div>
+                        <div class="dropdown-item" onclick="toggleWidget('card-speed')">
+                            <span>Speed</span>
+                            <input type="checkbox" id="check-speed" checked>
+                        </div>
+                        <div class="dropdown-item" onclick="toggleWidget('card-key-owner')">
+                            <span>Key Act. Owner</span>
+                            <input type="checkbox" id="check-key-owner" checked>
+                        </div>
+                        <div class="dropdown-item" onclick="toggleWidget('card-progress-analysis')">
+                            <span>Progress</span>
+                            <input type="checkbox" id="check-progress-analysis" checked>
+                        </div>
+                        <div class="dropdown-item" onclick="toggleWidget('card-financial')">
+                            <span>Financial</span>
+                            <input type="checkbox" id="check-financial" checked>
+                        </div>
+                        <div class="dropdown-item" onclick="toggleWidget('card-progress-trend')">
+                            <span>Trend</span>
+                            <input type="checkbox" id="check-progress-trend" checked>
+                        </div>
+                        <div class="dropdown-item" onclick="toggleWidget('card-owner-table')">
+                            <span>Owner Table</span>
+                            <input type="checkbox" id="check-owner-table" checked>
+                        </div>
+                        <div class="dropdown-item" onclick="toggleWidget('card-status-dist')">
+                            <span>Status Dist.</span>
+                            <input type="checkbox" id="check-status-dist" checked>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+
+
+        <!-- Completion Rate Bars -->
+        <div style="margin-bottom: 30px; display: flex; gap: 20px;">
+            <!-- Overall Initiatives Rate -->
+            <div
+                style="flex: 1; display: flex; align-items: center; gap: 15px; background: rgba(21, 21, 34, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(0, 136, 255, 0.3); border-radius: 12px; padding: 18px 20px; box-shadow: 0 4px 15px rgba(0, 136, 255, 0.1);">
+                <div
+                    style="font-weight: 700; color: white; white-space: nowrap; font-size: 14px; min-width: 140px; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Overall Initiatives</div>
+                <div
+                    style="flex: 1; position: relative; height: 24px; background: rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
+                    <div id="completionBarFill"
+                        style="height: 100%; width: 0%; background: linear-gradient(90deg, #00eebb, #0088ff); transition: width 1s; box-shadow: 0 0 10px rgba(0, 238, 187, 0.5);">
+                    </div>
+                    <div id="completionBarText"
+                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.7);">
+                        0%</div>
+                </div>
+                <div
+                    style="font-size: 13px; color: var(--text-muted); white-space: nowrap; min-width: 50px; text-align: right;">
+                    <span id="completionCount" style="color: white; font-weight: bold; font-size: 14px;">0</span>/<span
+                        id="completionTotal" style="font-size: 14px;">0</span>
+                </div>
+            </div>
+
+            <!-- Overall Key Activities Rate -->
+            <div
+                style="flex: 1; display: flex; align-items: center; gap: 15px; background: rgba(21, 21, 34, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255, 153, 0, 0.3); border-radius: 12px; padding: 18px 20px; box-shadow: 0 4px 15px rgba(255, 153, 0, 0.1);">
+                <div
+                    style="font-weight: 700; color: white; white-space: nowrap; font-size: 14px; min-width: 140px; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Overall Key
+                    Activities</div>
+                <div
+                    style="flex: 1; position: relative; height: 24px; background: rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
+                    <div id="keyActivityBarFill"
+                        style="height: 100%; width: 0%; background: linear-gradient(90deg, #ff9900, #ff5500); transition: width 1s; box-shadow: 0 0 10px rgba(255, 153, 0, 0.5);">
+                    </div>
+                    <div id="keyActivityBarText"
+                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.7);">
+                        0%</div>
+                </div>
+                <div
+                    style="font-size: 13px; color: var(--text-muted); white-space: nowrap; min-width: 50px; text-align: right;">
+                    <span id="keyActivityCount" style="color: white; font-weight: bold; font-size: 14px;">0</span>/<span
+                        id="keyActivityTotal" style="font-size: 14px;">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Stats -->
+        <div class="stats-grid" id="statsGrid">
+            <!-- Injected via JS -->
+        </div>
+
+        <!-- Row 0: Advanced Analytics (Hidden by default or managed via widget) -->
+        <div class="charts-container fade-in-up" id="row-charts-advanced"
+            style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <!-- 1. Resource Workload -->
+            <!-- 1. Resource Workload -->
+            <div class="chart-card draggable-card" id="card-workload" draggable="true">
+                <div class="chart-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display:flex;align-items:center;">
+                        <i data-lucide="grip-vertical" class="drag-handle"></i>
+                        <span>Resource Workload Allocation</span>
+                    </div>
+                    <button onclick="toggleCardSize('card-workload')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer; margin-right:5px;"
+                        title="Resize"><i data-lucide="maximize-2" style="width:16px;"></i></button>
+                    <button onclick="hideWidget('card-workload')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i
+                            data-lucide="x" style="width:16px;"></i></button>
+                </div>
+                <div class="chart-wrapper" style="flex:1; position: relative; min-height: 250px;">
+                    <canvas id="workloadChart"></canvas>
+                </div>
+            </div>
+            <!-- 2. Financial S-Curve -->
+            <!-- 2. Financial S-Curve -->
+            <div class="chart-card draggable-card" id="card-scurve" draggable="true">
+                <div class="chart-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display:flex;align-items:center;">
+                        <i data-lucide="grip-vertical" class="drag-handle"></i>
+                        <span>Financial S-Curve (Cumulative)</span>
+                    </div>
+                    <button onclick="toggleCardSize('card-scurve')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer; margin-right:5px;"
+                        title="Resize"><i data-lucide="maximize-2" style="width:16px;"></i></button>
+                    <button onclick="hideWidget('card-scurve')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i
+                            data-lucide="x" style="width:16px;"></i></button>
+                </div>
+                <div class="chart-wrapper" style="flex:1; position: relative; min-height: 250px;">
+                    <canvas id="sCurveChart"></canvas>
+                </div>
+            </div>
+            <!-- 3. Task Aging -->
+            <!-- 3. Task Aging -->
+            <div class="chart-card draggable-card" id="card-aging" draggable="true">
+                <div class="chart-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display:flex;align-items:center;">
+                        <i data-lucide="grip-vertical" class="drag-handle"></i>
+                        <span>Task Aging (Days Active)</span>
+                    </div>
+                    <button onclick="toggleCardSize('card-aging')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer; margin-right:5px;"
+                        title="Resize"><i data-lucide="maximize-2" style="width:16px;"></i></button>
+                    <button onclick="hideWidget('card-aging')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i
+                            data-lucide="x" style="width:16px;"></i></button>
+                </div>
+                <div class="chart-wrapper" style="flex:1; position: relative; min-height: 250px;">
+                    <canvas id="agingChart"></canvas>
+                </div>
+            </div>
+            <!-- 4. Monthly Velocity -->
+            <!-- 4. Monthly Velocity -->
+            <div class="chart-card draggable-card" id="card-velocity" draggable="true">
+                <div class="chart-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display:flex;align-items:center;">
+                        <i data-lucide="grip-vertical" class="drag-handle"></i>
+                        <span>Monthly Project Velocity</span>
+                    </div>
+                    <button onclick="toggleCardSize('card-velocity')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer; margin-right:5px;"
+                        title="Resize"><i data-lucide="maximize-2" style="width:16px;"></i></button>
+                    <button onclick="hideWidget('card-velocity')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i
+                            data-lucide="x" style="width:16px;"></i></button>
+                </div>
+                <div class="chart-wrapper" style="flex:1; position: relative; min-height: 250px;">
+                    <canvas id="velocityChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 1: Distribution, Risk, Speed -->
+        <div class="charts-container fade-in-up" id="row-charts-1" style="grid-template-columns: repeat(5, 1fr);">
+            <!-- Owner Distribution -->
+            <div class="chart-card draggable-card" id="card-owner-dist" draggable="true">
+                <div class="chart-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display:flex;align-items:center;">
+                        <i data-lucide="grip-vertical" class="drag-handle"></i>
+                        <span>Initiatives Distribution by Owner</span>
+                    </div>
+                    <button onclick="toggleCardSize('card-owner-dist')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer; margin-right:5px;"
+                        title="Resize"><i data-lucide="maximize-2" style="width:16px;"></i></button>
+                    <button onclick="hideWidget('card-owner-dist')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i
+                            data-lucide="x" style="width:16px;"></i></button>
+                </div>
+                <canvas id="ownerPropChart" style="max-height: 250px;"></canvas>
+            </div>
+
+            <!-- Risk -->
+            <div class="chart-card draggable-card" id="card-risk" draggable="true">
+                <div class="chart-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display:flex;align-items:center;">
+                        <i data-lucide="grip-vertical" class="drag-handle"></i>
+                        <span>Initiatives at Risk <i data-lucide="alert-triangle"
+                                style="color: #ff0055; width: 16px; display: inline; vertical-align: middle;"></i></span>
+                    </div>
+                    <button onclick="toggleCardSize('card-risk')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer; margin-right:5px;"
+                        title="Resize"><i data-lucide="maximize-2" style="width:16px;"></i></button>
+                    <button onclick="hideWidget('card-risk')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i
+                            data-lucide="x" style="width:16px;"></i></button>
+                </div>
+                <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+                    <canvas id="urgencyChart" style="max-height: 200px; max-width: 200px;"></canvas>
+                </div>
+            </div>
+
+            <!-- Key Activities Risk -->
+            <div class="chart-card draggable-card" id="card-key-risk" draggable="true">
+                <div class="chart-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display:flex;align-items:center;">
+                        <i data-lucide="grip-vertical" class="drag-handle"></i>
+                        <span>Key Activities at Risk</span>
+                    </div>
+                    <button onclick="toggleCardSize('card-key-risk')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer; margin-right:5px;"
+                        title="Resize"><i data-lucide="maximize-2" style="width:16px;"></i></button>
+                    <button onclick="hideWidget('card-key-risk')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i
+                            data-lucide="x" style="width:16px;"></i></button>
+                </div>
+                <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+                    <canvas id="keyRiskChart" style="max-height: 200px; max-width: 200px;"></canvas>
+                </div>
+            </div>
+
+            <!-- Key Activities Effectiveness (New) -->
+            <div class="chart-card draggable-card" id="card-key-effectiveness" draggable="true">
+                <div class="chart-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display:flex;align-items:center;">
+                        <i data-lucide="grip-vertical" class="drag-handle"></i>
+                        <span>Key Act. Duration</span>
+                    </div>
+                    <button onclick="toggleCardSize('card-key-effectiveness')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer; margin-right:5px;"
+                        title="Resize"><i data-lucide="maximize-2" style="width:16px;"></i></button>
+                    <button onclick="hideWidget('card-key-effectiveness')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i
+                            data-lucide="x" style="width:16px;"></i></button>
+                </div>
+                <!-- Custom Percent in Center -->
+                <div style="position: absolute; top:55%; left:50%; transform:translate(-50%, -50%); font-size:20px; font-weight:bold; color:white; pointer-events:none;"
+                    id="keyActivityEffectivenessPercent"></div>
+                <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+                    <canvas id="keyActivityEffectivenessChart" style="max-height: 200px; max-width: 200px;"></canvas>
+                </div>
+            </div>
+
+            <!-- Speed -->
+            <div class="chart-card scroll-card draggable-card" id="card-speed" draggable="true">
+                <div class="chart-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display:flex;align-items:center;">
+                        <i data-lucide="grip-vertical" class="drag-handle"></i>
+                        <span>Owner Speed Assessment</span>
+                    </div>
+                    <button onclick="toggleCardSize('card-speed')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer; margin-right:5px;"
+                        title="Resize"><i data-lucide="maximize-2" style="width:16px;"></i></button>
+                    <button onclick="hideWidget('card-speed')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i
+                            data-lucide="x" style="width:16px;"></i></button>
+                </div>
+                <div style="font-size: 10px; color: var(--text-muted); text-align: center; margin-bottom: 5px;">
+                    Initiatives Owner</div>
+                <canvas id="aggressivenessChart" style="max-height: 250px;"></canvas>
+            </div>
+        </div>
+
+        <!-- Row 2: Analysis & Financials -->
+        <div class="charts-container fade-in-up" style="grid-template-columns: repeat(3, 1fr);" id="row-charts-2">
+            <!-- Progress Analysis -->
+            <div class="chart-card draggable-card" id="card-progress-analysis" draggable="true">
+                <div class="chart-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display:flex; align-items: center; gap: 10px;">
+                        <i data-lucide="grip-vertical" class="drag-handle"></i>
+                        <span>Initiatives Progress Analysis</span>
+                        <select id="progressAnalysisFilter" onchange="updateProgressAnalysis()"
+                            style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 4px; font-size: 11px; padding: 2px 5px;">
+                            <option value="Done" style="background: #1a1a2e; color: white;">Done</option>
+                            <option value="On Going" style="background: #1a1a2e; color: white;">On Going</option>
+                            <option value="Hold" style="background: #1a1a2e; color: white;">Hold</option>
+                            <option value="Not Started" style="background: #1a1a2e; color: white;">Not Started</option>
+                            <option value="Carry Over" style="background: #1a1a2e; color: white;">Carry Over</option>
+                            <option value="Cancelled" style="background: #1a1a2e; color: white;">Cancelled</option>
+                        </select>
+                    </div>
+                    <button onclick="toggleCardSize('card-progress-analysis')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer; margin-right:5px;"
+                        title="Resize"><i data-lucide="maximize-2" style="width:16px;"></i></button>
+                    <button onclick="hideWidget('card-progress-analysis')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i
+                            data-lucide="x" style="width:16px;"></i></button>
+                </div>
+                <div style="font-size: 10px; color: var(--text-muted); text-align: center; margin-bottom: 5px;">
+                    Initiatives Owner</div>
+                <canvas id="initiativeProgressChart" style="max-height: 250px;"></canvas>
+            </div>
+
+            <!-- Financial Chart (New) -->
+            <div class="chart-card draggable-card" id="card-financial" draggable="true">
+                <div class="chart-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display:flex;align-items:center;">
+                        <i data-lucide="grip-vertical" class="drag-handle"></i>
+                        <span>Financial Overview (Budget vs Cost)</span>
+                    </div>
+                    <button onclick="toggleCardSize('card-financial')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer; margin-right:5px;"
+                        title="Resize"><i data-lucide="maximize-2" style="width:16px;"></i></button>
+                    <button onclick="hideWidget('card-financial')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i
+                            data-lucide="x" style="width:16px;"></i></button>
+                </div>
+                <div style="font-size: 10px; color: var(--text-muted); text-align: center; margin-bottom: 5px;">
+                    In Million IDR (Juta Rp)
+                </div>
+                <canvas id="financialChart" style="max-height: 250px;"></canvas>
+            </div>
+
+            <!-- Key Activity By Owner (New) -->
+            <div class="chart-card draggable-card" id="card-key-owner" draggable="true">
+                <div class="chart-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display:flex;align-items:center;">
+                        <i data-lucide="grip-vertical" class="drag-handle"></i>
+                        <span>Key Act. Effectiveness by Owner</span>
+                    </div>
+                    <button onclick="toggleCardSize('card-key-owner')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer; margin-right:5px;"
+                        title="Resize"><i data-lucide="maximize-2" style="width:16px;"></i></button>
+                    <button onclick="hideWidget('card-key-owner')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i
+                            data-lucide="x" style="width:16px;"></i></button>
+                </div>
+                <div style="font-size: 10px; color: var(--text-muted); text-align: center; margin-bottom: 5px;">
+                    Timeline Effectiveness (Completed vs Schedule vs Overdue)
+                </div>
+                <canvas id="keyActivityOwnerChart" style="max-height: 250px;"></canvas>
+            </div>
+        </div>
+
+        <!-- Row 2.5: Overall Progress Line (Moved) -->
+        <div class="charts-container fade-in-up" style="grid-template-columns: 1fr;" id="row-charts-3">
+            <div class="chart-card draggable-card" id="card-progress-trend" draggable="true">
+                <div class="chart-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display:flex;align-items:center;">
+                        <i data-lucide="grip-vertical" class="drag-handle"></i>
+                        <span>Overall Progress Trend</span>
+                    </div>
+                    <button onclick="toggleCardSize('card-progress-trend')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer; margin-right:5px;"
+                        title="Resize"><i data-lucide="maximize-2" style="width:16px;"></i></button>
+                    <button onclick="hideWidget('card-progress-trend')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i
+                            data-lucide="x" style="width:16px;"></i></button>
+                </div>
+                <canvas id="progressResumeChart" style="max-height: 200px;"></canvas>
+            </div>
+        </div>
+
+
+        <!-- Row 3: Owner Details Table -->
+        <div class="charts-container fade-in-up" style="grid-template-columns: 2fr 1fr;" id="row-charts-4">
+            <div class="chart-card draggable-card" id="card-owner-table" style="overflow-x: auto;" draggable="true">
+                <div class="chart-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display:flex;align-items:center;">
+                        <i data-lucide="grip-vertical" class="drag-handle"></i>
+                        <span>Initiatives Owner Details</span>
+                    </div>
+                    <button onclick="toggleCardSize('card-owner-table')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer; margin-right:5px;"
+                        title="Resize"><i data-lucide="maximize-2" style="width:16px;"></i></button>
+                    <button onclick="hideWidget('card-owner-table')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i
+                            data-lucide="x" style="width:16px;"></i></button>
+                </div>
+                <div class="table-container">
+                    <table
+                        style="width: 100%; text-align: left; border-collapse: collapse; font-size: 12px; color: var(--text-muted);">
+                        <thead>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: white;">
+                                <th style="padding: 10px;">Owner</th>
+                                <th style="padding: 10px; text-align: center;">Total</th>
+                                <th style="padding: 10px; text-align: center; color: var(--success);">Done</th>
+                                <th style="padding: 10px; text-align: center; color: var(--info);">On Going</th>
+                                <th style="padding: 10px; text-align: center; color: #ff8800;">Hold</th>
+                                <th style="padding: 10px; text-align: center;">Not Started</th>
+                                <th style="padding: 10px; text-align: center; color: var(--warning);">Carry Over
+                                </th>
+                                <th style="padding: 10px; text-align: center; color: var(--danger);">Cancel</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ownerDetailTable">
+                            <!-- JS Injected -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="chart-card draggable-card" id="card-status-dist" draggable="true">
+                <div class="chart-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>Status Distribution</span>
+                    <button onclick="toggleCardSize('card-status-dist')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer; margin-right:5px;"
+                        title="Resize"><i data-lucide="maximize-2" style="width:16px;"></i></button>
+                    <button onclick="hideWidget('card-status-dist')"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i
+                            data-lucide="x" style="width:16px;"></i></button>
+                </div>
+                <div style="text-align: center; font-size: 12px; color: var(--text-muted); margin-bottom: 5px;">
+                    Total
+                    Initiatives: <span id="totalInitCount" style="color: white; font-weight: bold;">0</span></div>
+                <canvas id="statusDistChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="js/data.js"></script>
+    <script src="js/mock-users.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/menu-names.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/logout.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+    <script>
+        // Register Plugin
+        try {
+            if (typeof ChartDataLabels !== 'undefined') {
+                Chart.register(ChartDataLabels);
+            }
+        } catch (error) {
+            console.error("ChartDataLabels plugin failed to load", error);
+        }
+
+        // --- DATA SYNC LOGIC ---
+        // 1. Get Data from LocalStorage or Fallback
+        // 1. Data Version Control (Force Reset for Entity Support)
+        const CURRENT_DATA_VERSION = '1.4';
+        const storedVersion = localStorage.getItem('dataVersion');
+        let allInitiatives;
+
+        if (storedVersion !== CURRENT_DATA_VERSION) {
+            console.log('Dashboard: New data version detected. Resetting data...');
+            allInitiatives = MOCK_INITIATIVES;
+            localStorage.setItem('initiatives', JSON.stringify(allInitiatives));
+            localStorage.setItem('dataVersion', CURRENT_DATA_VERSION);
+        } else {
+            allInitiatives = JSON.parse(localStorage.getItem('initiatives')) || MOCK_INITIATIVES;
+        }
+        // --- DATA SYNC (Load & Filter) ---
+        allInitiatives = JSON.parse(localStorage.getItem('initiatives') || 'null') || MOCK_INITIATIVES;
+        let initiatives = allInitiatives; // Working copy
+
+        // Get current user info for filtering
+        const currentUsername = localStorage.getItem('currentUser');
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const currentUser = users.find(u => u.username === currentUsername);
+        const isAdmin = currentUser && (currentUser.role === 'administrator' || currentUser.role === 'admin');
+        const userEntity = currentUser?.entity || 'All';
+
+        // Populate Entity Filter
+        const entitySelect = document.getElementById('filterEntity');
+        if (typeof ENTITIES !== 'undefined') {
+            for (const [key, value] of Object.entries(ENTITIES)) {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.innerText = value;
+                opt.style.background = '#1a1a2e';
+                opt.style.color = 'white';
+                entitySelect.appendChild(opt);
+            }
+        }
+
+        // Hide entity filter for non-admin users
+        if (!isAdmin) {
+            const entityFilterEl = document.getElementById('filterEntity');
+            const entityDivider = document.getElementById('entityDivider');
+            if (entityFilterEl) entityFilterEl.style.display = 'none';
+            if (entityDivider) entityDivider.style.display = 'none';
+
+            // Auto-filter by user entity
+            if (userEntity && userEntity !== 'All') {
+                initiatives = allInitiatives.filter(i => i.entity === userEntity);
+            }
+        }
+
+        // Global Filter Logic
+
+        // --- Multi-Select Dropdown Logic ---
+        function toggleMonthDropdown() {
+            const menu = document.getElementById('monthDropdownMenu');
+            // Toggle Logic
+            if (menu.style.display === 'block') {
+                menu.style.display = 'none';
+            } else {
+                menu.style.display = 'block';
+            }
+        }
+
+        function toggleAllMonths(source) {
+            const checkboxes = document.querySelectorAll('.month-check');
+            checkboxes.forEach(cb => {
+                cb.checked = source.checked;
+            });
+            updateMonthLabel();
+        }
+
+        function updateMonthLabel() {
+            const checkboxes = document.querySelectorAll('.month-check:checked');
+            const total = document.querySelectorAll('.month-check').length;
+            const trigger = document.getElementById('monthDropdownTrigger');
+            const allCheck = document.querySelector('input[value="All"]');
+
+            if (checkboxes.length === total) {
+                trigger.innerText = 'All Months';
+                allCheck.checked = true;
+                // Indeterminate false
+                allCheck.indeterminate = false;
+            } else if (checkboxes.length === 0) {
+                trigger.innerText = 'Select Month';
+                allCheck.checked = false;
+                allCheck.indeterminate = false;
+            } else {
+                // Partial
+                allCheck.checked = false;
+                allCheck.indeterminate = true;
+
+                if (checkboxes.length <= 2) {
+                    // Show names if few
+                    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                    const names = Array.from(checkboxes).map(cb => months[cb.value]);
+                    trigger.innerText = names.join(', ');
+                } else {
+                    trigger.innerText = `${checkboxes.length} Selected`;
+                }
+            }
+        }
+
+        // Close dropdown when clicking outside
+        window.addEventListener('click', function (e) {
+            const container = document.getElementById('monthDropdownContainer');
+            if (container && !container.contains(e.target)) {
+                document.getElementById('monthDropdownMenu').style.display = 'none';
+            }
+        });
+
+        window.applyGlobalFilter = function () {
+            const entity = document.getElementById('filterEntity').value;
+            // Get Selected Months
+            const monthCheckboxes = document.querySelectorAll('.month-check:checked');
+            const selectedMonths = Array.from(monthCheckboxes).map(cb => parseInt(cb.value));
+            const isAllMonths = document.querySelector('input[value="All"]').checked || monthCheckboxes.length === 12;
+
+            const year = document.getElementById('filterYear').value;
+
+            // Start with appropriate base data
+            // For non-admin users, always start with their entity's data
+            if (!isAdmin && userEntity && userEntity !== 'All') {
+                initiatives = allInitiatives.filter(i => i.entity === userEntity);
+            } else if (isAdmin) {
+                // Admin can start with all or filter by selected entity
+                initiatives = allInitiatives;
+                if (entity !== 'All') {
+                    initiatives = initiatives.filter(i => i.entity === entity);
+                }
+            }
+
+            // Filter by month (Multi-Select)
+            if (!isAllMonths && selectedMonths.length > 0) {
+                initiatives = initiatives.filter(i => {
+                    if (!i.dueDate) return false;
+                    const d = new Date(i.dueDate);
+                    return selectedMonths.includes(d.getMonth());
+                });
+            } else if (selectedMonths.length === 0 && !isAllMonths) {
+                // Nothing selected? Usually show nothing, or show all? 
+                // Let's assume show nothing if explicitly everything is unchecked.
+                initiatives = [];
+            }
+
+            // Filter by year
+            if (year !== 'All') {
+                initiatives = initiatives.filter(i => {
+                    if (!i.dueDate) return false;
+                    const d = new Date(i.dueDate);
+                    return d.getFullYear() === parseInt(year);
+                });
+            }
+
+            // Re-Render All
+            updateDashboard();
+        }
+
+        // 2. Helper to Calculate Stats
+        function getProjectStats() {
+            // ... (Use 'initiatives' variable which is updated by filter)
+            return {
+                total: initiatives.length,
+                done: initiatives.filter(i => i.status === 'Done').length,
+                onGoing: initiatives.filter(i => i.status === 'On Going').length,
+                cancelled: initiatives.filter(i => i.status === 'Cancelled').length,
+                carryOver: initiatives.filter(i => i.status === 'Carry Over').length,
+                notStarted: initiatives.filter(i => i.status === 'Not Started').length,
+                hold: initiatives.filter(i => i.status === 'Hold').length
+            };
+        }
+        // --- END DATA SYNC ---
+
+        // Color Palette (Distinct / High Contrast)
+        // Color Palette (Distinct / High Contrast)
+        // Constants are imported from js/charts.js
+
+        Chart.defaults.color = '#a0a0b0';
+        Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+        Chart.defaults.plugins.datalabels.color = 'white';
+        Chart.defaults.plugins.datalabels.font = { weight: 'bold', size: 10 };
+        Chart.defaults.plugins.datalabels.display = true;
+
+
+        function getActiveOwners() {
+            const entityFilter = document.getElementById('filterEntity') ? document.getElementById('filterEntity').value : 'All';
+
+            if (entityFilter === 'All') {
+                // If All, showing 50+ owners is messy. 
+                // Option A: Show all. 
+                // Option B: Show owners who actually have initiatives in the filtered View.
+                // Let's go with B: Dynamic owners based on data.
+                if (initiatives.length > 0) {
+                    const ownersWithData = [...new Set(initiatives.map(i => i.owner))];
+                    // Sort them if possible? Or just return. 
+                    // We might want to include "empty" owners if a specific entity is selected, but for ALL, only showing active ones makes sense.
+                    return ownersWithData;
+                }
+                // Fallback if no data
+                if (typeof OWNERS_BY_ENTITY !== 'undefined') {
+                    const all = [];
+                    Object.values(OWNERS_BY_ENTITY).forEach(arr => all.push(...arr));
+                    return [...new Set(all)];
+                }
+                return PROJECT_OWNERS;
+            } else {
+                // Specific Entity: Show ALL defined owners for that entity (even if 0 projects) to show "gaps"
+                return OWNERS_BY_ENTITY[entityFilter] || PROJECT_OWNERS;
+            }
+        }
+
+
+
+        function updateDashboard() {
+            // SAFEGUARD
+            if (!document.getElementById('statsGrid')) return;
+
+            // 1. Stats
+            const stats = getProjectStats();
+            document.getElementById('statsGrid').style.gridTemplateColumns = 'repeat(7, 1fr)';
+
+            // Calculate percentages ensuring they sum to exactly 100%
+            let percentages = { done: 0, onGoing: 0, hold: 0, notStarted: 0, carryOver: 0, cancelled: 0 };
+
+            if (stats.total > 0) {
+                // Calculate exact percentages with decimals
+                const exactPercentages = [
+                    { key: 'done', value: stats.done, exact: (stats.done / stats.total) * 100 },
+                    { key: 'onGoing', value: stats.onGoing, exact: (stats.onGoing / stats.total) * 100 },
+                    { key: 'hold', value: stats.hold, exact: (stats.hold / stats.total) * 100 },
+                    { key: 'notStarted', value: stats.notStarted, exact: (stats.notStarted / stats.total) * 100 },
+                    { key: 'carryOver', value: stats.carryOver, exact: (stats.carryOver / stats.total) * 100 },
+                    { key: 'cancelled', value: stats.cancelled, exact: (stats.cancelled / stats.total) * 100 }
+                ];
+
+                // Floor all percentages and calculate remainders
+                exactPercentages.forEach(item => {
+                    percentages[item.key] = Math.floor(item.exact);
+                    item.remainder = item.exact - Math.floor(item.exact);
+                });
+
+                // Calculate how many percentage points we need to distribute
+                const currentSum = Object.values(percentages).reduce((a, b) => a + b, 0);
+                let pointsToDistribute = 100 - currentSum;
+
+                // Sort by remainder (descending) to distribute the remaining points
+                exactPercentages.sort((a, b) => b.remainder - a.remainder);
+
+                // Distribute remaining points to items with largest remainders
+                for (let i = 0; i < pointsToDistribute; i++) {
+                    percentages[exactPercentages[i].key]++;
+                }
+            }
+
+            const statHTML = `
+                <div class="stat-card" onclick="showStatusDetails('Total')" style="cursor: pointer; transition: transform 0.2s; position: relative;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <span class="stat-value">${stats.total}</span>
+                    <span class="stat-label">Total Initiatives</span>
+                </div>
+                <div class="stat-card done" onclick="showStatusDetails('Done')" style="cursor: pointer; transition: transform 0.2s; position: relative;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <div style="position: absolute; top: 10px; right: 10px; font-size: 11px; color: rgba(0,255,157,0.9); font-weight: 600;">${percentages.done}%</div>
+                    <span class="stat-value">${stats.done}</span>
+                    <span class="stat-label">Done</span>
+                </div>
+                <div class="stat-card ongoing" onclick="showStatusDetails('On Going')" style="cursor: pointer; transition: transform 0.2s; position: relative;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <div style="position: absolute; top: 10px; right: 10px; font-size: 11px; color: rgba(0,136,255,0.9); font-weight: 600;">${percentages.onGoing}%</div>
+                    <span class="stat-value">${stats.onGoing}</span>
+                    <span class="stat-label">On Going</span>
+                </div>
+                <div class="stat-card hold" onclick="showStatusDetails('Hold')" style="cursor: pointer; transition: transform 0.2s; position: relative;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <div style="position: absolute; top: 10px; right: 10px; font-size: 11px; color: rgba(255,136,0,0.9); font-weight: 600;">${percentages.hold}%</div>
+                    <span class="stat-value">${stats.hold}</span>
+                    <span class="stat-label">Hold</span>
+                </div>
+                <div class="stat-card notstarted" onclick="showStatusDetails('Not Started')" style="cursor: pointer; transition: transform 0.2s; position: relative;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <div style="position: absolute; top: 10px; right: 10px; font-size: 11px; color: rgba(136,136,136,0.9); font-weight: 600;">${percentages.notStarted}%</div>
+                    <span class="stat-value">${stats.notStarted}</span>
+                    <span class="stat-label">Not Started</span>
+                </div>
+                <div class="stat-card carryover" onclick="showStatusDetails('Carry Over')" style="cursor: pointer; transition: transform 0.2s; position: relative;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <div style="position: absolute; top: 10px; right: 10px; font-size: 11px; color: rgba(255,191,0,0.9); font-weight: 600;">${percentages.carryOver}%</div>
+                    <span class="stat-value">${stats.carryOver}</span>
+                    <span class="stat-label">Carry Over</span>
+                </div>
+                 <div class="stat-card cancelled" onclick="showStatusDetails('Cancelled')" style="cursor: pointer; transition: transform 0.2s; position: relative;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <div style="position: absolute; top: 10px; right: 10px; font-size: 11px; color: rgba(255,0,85,0.9); font-weight: 600;">${percentages.cancelled}%</div>
+                    <span class="stat-value">${stats.cancelled}</span>
+                    <span class="stat-label">Cancelled</span>
+                </div>
+            `;
+            document.getElementById('statsGrid').innerHTML = statHTML;
+
+            const destroyChart = (id) => {
+                const chart = Chart.getChart(id);
+                if (chart) chart.destroy();
+            }
+
+            const currentOwners = getActiveOwners();
+
+            // --- Call Advanced Analytics Charts ---
+            renderWorkloadChart(initiatives, currentOwners);
+            renderSCurveChart(initiatives);
+            renderAgingChart(initiatives);
+            renderVelocityChart(initiatives);
+            // Ensure container visibility
+            const rowAdvanced = document.getElementById('row-charts-advanced');
+            if (rowAdvanced) {
+                const anyVisible = ['card-workload', 'card-scurve', 'card-aging', 'card-velocity'].some(cid => {
+                    const c = document.getElementById(cid);
+                    return c && c.style.display !== 'none';
+                });
+                rowAdvanced.style.display = anyVisible ? 'grid' : 'none';
+            }
+
+            // --- 2. RISK CHART ---
+            renderRiskChart(initiatives);
+
+            // --- 3. OWNER SPEED ---
+            renderSpeedChart(initiatives, currentOwners);
+
+            // --- 4. OWNER DISTRIBUTION ---
+            renderOwnerDistChart(initiatives, currentOwners);
+
+            // --- 5. OVERALL PROGRESS ---
+            renderProgressTrendChart(initiatives);
+
+            // --- 6. PROGRESS ANALYSIS ---
+            if (window.updateProgressAnalysis) window.updateProgressAnalysis();
+
+            // --- 7. STATUS DISTRIBUTION ---
+            renderStatusDistChart(initiatives);
+
+            // --- 8. FINANCIAL CHART ---
+            renderFinancialChart(initiatives, currentOwners);
+
+            // --- 9. COMPLETION BARS ---
+            // A. Initiatives - Use same percentage as Done card
+            const compDone = stats.done;
+            const compTotal = stats.total;
+            const compPercent = percentages.done; // Use the same percentage as Done card
+            if (document.getElementById('completionBarFill')) {
+                document.getElementById('completionBarFill').style.width = compPercent + '%';
+                document.getElementById('completionBarText').innerText = compPercent + '%';
+                document.getElementById('completionCount').innerText = compDone;
+                document.getElementById('completionTotal').innerText = compTotal;
+            }
+
+            // B. Key Activities
+            let kaTotal = 0;
+            let kaValue = 0; // Will be Done Count for Admin, or Total Progress for User
+
+            initiatives.forEach(i => {
+                if (i.subInitiatives) {
+                    kaTotal += i.subInitiatives.length;
+                    if (isAdmin) {
+                        // Admin: Count Done items (Original Logic)
+                        kaValue += i.subInitiatives.filter(s => s.status === 'Done' || s.progress == 100).length;
+                    } else {
+                        // User: Sum Progress (New Logic)
+                        kaValue += i.subInitiatives.reduce((sum, s) => sum + (parseFloat(s.progress) || 0), 0);
+                    }
+                }
+            });
+
+            let kaPercent = 0;
+            if (kaTotal > 0) {
+                if (isAdmin) {
+                    kaPercent = Math.round((kaValue / kaTotal) * 100);
+                } else {
+                    kaPercent = Math.round(kaValue / kaTotal);
+                }
+            }
+
+            if (document.getElementById('keyActivityBarFill')) {
+                document.getElementById('keyActivityBarFill').style.width = kaPercent + '%';
+                document.getElementById('keyActivityBarText').innerText = kaPercent + '%';
+                // For users, show "Avg Progress" text or similar? Or just the count? 
+                // The UI shows X/Y. For Admin it's Done/Total. 
+                // For User, showing "SumProgress/Total" is meaningless (e.g. 1500/3). 
+                // Let's keep showing the count of activities (Total) but the BAR represents progress.
+                // Or maybe show "Done" count in the text like before?
+                // The user complained about the PERCENTAGE (0%).
+                // I will update the Count text to be consistent with what the bar represents? 
+                // Actually, X/Y usually means "Items Completed / Total Items".
+                // If I change the bar to be pure progress, X/Y becoming "Done/Total" is confusing if bar is 50% but Done is 0/3.
+                // But changing X in X/Y to "Average" is weird.
+                // I'll keep X/Y as "Done / Total" count for consistency, but enable the BAR to show progress?
+                // Wait, if the bar is 50% but text is 0/3, user might be okay.
+                // Let's count "Done" for the text label anyway (for consistency), but use Average for the Percent/Bar.
+
+                let displayCount = 0;
+                initiatives.forEach(i => {
+                    if (i.subInitiatives) {
+                        displayCount += i.subInitiatives.filter(s => s.status === 'Done' || s.progress == 100).length;
+                    }
+                });
+
+                document.getElementById('keyActivityCount').innerText = displayCount;
+                document.getElementById('keyActivityTotal').innerText = kaTotal;
+            }
+
+            // C. Status Breakdown Counts
+            function updateQuickStats() {
+                const initiatives = JSON.parse(localStorage.getItem('initiatives') || '[]');
+                const total = initiatives.length;
+
+                // Helper to calculate percentage
+                const getPct = (count) => {
+                    if (total === 0) return '0%';
+                    return Math.round((count / total) * 100) + '%';
+                };
+
+                const counts = {
+                    done: initiatives.filter(i => i.status === 'Done').length,
+                    onGoing: initiatives.filter(i => ['On Progress', 'On Going'].includes(i.status)).length,
+                    hold: initiatives.filter(i => i.status === 'Hold').length,
+                    notStarted: initiatives.filter(i => i.status === 'Not Started').length,
+                    carryOver: initiatives.filter(i => i.status === 'Carry Over').length,
+                    cancelled: initiatives.filter(i => i.status === 'Cancelled').length
+                };
+
+                // Update DOM with Safe Checks
+                if (document.getElementById('stat-total')) {
+                    document.getElementById('stat-total').innerText = total;
+                    if (document.getElementById('stat-total-pct')) document.getElementById('stat-total-pct').innerText = '100%';
+                }
+
+                if (document.getElementById('stat-done')) {
+                    document.getElementById('stat-done').innerText = counts.done;
+                    if (document.getElementById('stat-done-pct')) document.getElementById('stat-done-pct').innerText = getPct(counts.done);
+                }
+
+                if (document.getElementById('stat-ongoing')) {
+                    document.getElementById('stat-ongoing').innerText = counts.onGoing;
+                    if (document.getElementById('stat-ongoing-pct')) document.getElementById('stat-ongoing-pct').innerText = getPct(counts.onGoing);
+                }
+
+                if (document.getElementById('stat-hold')) {
+                    document.getElementById('stat-hold').innerText = counts.hold;
+                    if (document.getElementById('stat-hold-pct')) document.getElementById('stat-hold-pct').innerText = getPct(counts.hold);
+                }
+
+                if (document.getElementById('stat-notstarted')) {
+                    document.getElementById('stat-notstarted').innerText = counts.notStarted;
+                    if (document.getElementById('stat-notstarted-pct')) document.getElementById('stat-notstarted-pct').innerText = getPct(counts.notStarted);
+                }
+
+                if (document.getElementById('stat-carryover')) {
+                    document.getElementById('stat-carryover').innerText = counts.carryOver;
+                    // Add pct if element exists
+                }
+
+                if (document.getElementById('stat-cancelled')) {
+                    document.getElementById('stat-cancelled').innerText = counts.cancelled;
+                    // Add pct if element exists
+                }
+            }
+
+            // --- 10. OWNER TABLE ---
+            renderOwnerTable(initiatives, currentOwners);
+
+            // --- 11. SIDEBAR STATS ---
+            renderSidebarStats(initiatives);
+
+            // Call Key Risk Chart
+            if (window.renderKeyRiskChart) renderKeyRiskChart(initiatives);
+
+            // Call Key Progress Chart
+            if (window.renderKeyProgressChart) renderKeyProgressChart(initiatives);
+
+            // Call Key Activity Chart (Timeline Effectiveness for Admin, Duration for User)
+            if (isAdmin && typeof renderKeyActivityTimelineChart === 'function') {
+                renderKeyActivityTimelineChart(initiatives);
+                // Update Title Dynamically
+                const titleEl = document.querySelector('#card-key-effectiveness .chart-header span');
+                if (titleEl) titleEl.innerText = 'Key Activity Effectiveness (Timeline)';
+            } else if (window.renderKeyActivityDurationChart) {
+                renderKeyActivityDurationChart(initiatives);
+                // Ensure Title is Standard
+                const titleEl = document.querySelector('#card-key-effectiveness .chart-header span');
+                if (titleEl) titleEl.innerText = 'Key Act. Duration';
+            }
+
+            // --- 12. KEY ACTIVITY OWNER CHART (New) ---
+            if (isAdmin && typeof renderKeyActivityTimelineByOwnerChart === 'function') {
+                renderKeyActivityTimelineByOwnerChart(initiatives, currentOwners);
+                // Ensure visible if admin
+                const card = document.getElementById('card-key-owner');
+                if (card) card.style.display = 'flex';
+            } else {
+                // Hide for non-admins
+                const card = document.getElementById('card-key-owner');
+                if (card) card.style.display = 'none';
+            }
+
+        } // End updateDashboard
+
+        // --- STATUS FILTER FUNCTION ---
+        function filterByStatus(status) {
+            // Navigate to projects page with status filter
+            if (status === 'Total') {
+                window.location.href = 'projects.html';
+            } else {
+                window.location.href = `projects.html?status=${encodeURIComponent(status)}`;
+            }
+        }
+
+
+        // --- INITIATIVES PROGRESS ANALYSIS (Interactive) ---
+        let progressChartInstance = null;
+
+        window.renderProgressAnalysisChart = function (statusFilter) {
+            const canvas = document.getElementById('initiativeProgressChart');
+            if (!canvas) return;
+            if (progressChartInstance) progressChartInstance.destroy();
+
+            // Get Current Owners dynamically
+            const currentOwners = getActiveOwners();
+            const ownerShortNames = currentOwners.map(o => o.replace("Sub Divisi ", "").replace("Divisi ", "").substring(0, 15));
+
+            const dataCounts = currentOwners.map(owner => {
+                return initiatives.filter(i => i.owner === owner && i.status === statusFilter).length;
+            });
+
+            let barColor = '#00ff9d';
+            if (statusFilter === 'On Going') barColor = '#0088ff';
+            if (statusFilter === 'Hold') barColor = '#ff8800';
+            if (statusFilter === 'Not Started') barColor = '#888';
+            if (statusFilter === 'Carry Over') barColor = '#ffbf00';
+            if (statusFilter === 'Cancelled') barColor = '#ff0055';
+
+            progressChartInstance = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: ownerShortNames,
+                    datasets: [{
+                        label: `${statusFilter} Initiatives`,
+                        data: dataCounts,
+                        backgroundColor: barColor,
+                        borderRadius: 4,
+                        barThickness: 25
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            color: 'white',
+                            formatter: (val) => val > 0 ? val : ''
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, color: '#a0a0b0' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10 }, color: 'white' }
+                        }
+                    }
+                }
+            });
+        }
+
+        window.updateProgressAnalysis = function () {
+            const status = document.getElementById('progressAnalysisFilter') ? document.getElementById('progressAnalysisFilter').value : 'Done';
+            renderProgressAnalysisChart(status);
+        };
+
+        // Initial Call
+        updateDashboard();
+
+        window.renderKeyProgressChart = function (initiatives) {
+            const canvas = document.getElementById('keyProgressChart');
+            if (!canvas) return;
+
+            // Destroy old
+            const existing = Chart.getChart(canvas);
+            if (existing) existing.destroy();
+
+            // Calculate
+            let totalKeys = 0;
+            let doneKeys = 0;
+            initiatives.forEach(i => {
+                if (i.subInitiatives) {
+                    totalKeys += i.subInitiatives.length;
+                    // Count if status is Done OR progress is 100
+                    doneKeys += i.subInitiatives.filter(s => s.status === 'Done' || s.progress == 100).length;
+                }
+            });
+
+            const percent = totalKeys > 0 ? Math.round((doneKeys / totalKeys) * 100) : 0;
+            const remaining = 100 - percent;
+
+            // Doughnut Chart
+            new Chart(canvas, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Done', 'Remaining'],
+                    datasets: [{
+                        data: [percent, remaining],
+                        backgroundColor: ['#00ff9d', 'rgba(255,255,255,0.1)'],
+                        borderWidth: 0,
+                        cutout: '70%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false },
+                        datalabels: { display: false } // No labels on ring
+                    }
+                },
+                plugins: [{
+                    id: 'centerText',
+                    beforeDraw: function (chart) {
+                        const width = chart.width, height = chart.height, ctx = chart.ctx;
+                        ctx.restore();
+                        const fontSize = (height / 114).toFixed(2);
+                        ctx.font = "bold " + fontSize + "em sans-serif";
+                        ctx.textBaseline = "middle";
+                        ctx.fillStyle = "white";
+                        const text = percent + "%",
+                            textX = Math.round((width - ctx.measureText(text).width) / 2),
+                            textY = height / 2;
+                        ctx.fillText(text, textX, textY);
+                        ctx.save();
+                    }
+                }]
+            });
+        }
+    </script>
+
+    <!-- Status Details Modal -->
+    <div id="statusDetailModal" class="modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+        <div class="modal-content"
+            style="background: var(--bg-card); padding: 30px; border-radius: 12px; border: 1px solid var(--primary); width: 600px; max-height: 80vh; overflow-y: auto;">
+            <div class="flex justify-between items-center"
+                style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                <h2 id="statusModalTitle" style="color: white; font-size: 20px;">Status Details</h2>
+                <button onclick="document.getElementById('statusDetailModal').style.display='none'"
+                    style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 20px;">&times;</button>
+            </div>
+            <div id="statusModalContent">
+                <!-- Content Injected Here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showStatusDetails(status) {
+            const modal = document.getElementById('statusDetailModal');
+            const title = document.getElementById('statusModalTitle');
+            const content = document.getElementById('statusModalContent');
+
+            title.innerText = `Details: ${status}`;
+
+            title.innerText = `Details: ${status}`;
+
+            // Filter initiatives
+            let filtered = [];
+            if (status === 'Total') {
+                filtered = initiatives;
+            } else {
+                filtered = initiatives.filter(i => i.status === status);
+            }
+
+            if (filtered.length === 0) {
+                content.innerHTML = '<p style="color: var(--text-muted); text-align: center;">No projects found with this status.</p>';
+                modal.style.display = 'flex';
+                return;
+            }
+
+            // Group by Owner
+            const grouped = {};
+            filtered.forEach(p => {
+                const owner = p.owner;
+                if (!grouped[owner]) grouped[owner] = [];
+                grouped[owner].push(p);
+            });
+
+            // Generate HTML
+            let html = '<div style="display: flex; flex-direction: column; gap: 15px;">';
+
+            for (const [owner, projects] of Object.entries(grouped)) {
+                // Determine Entity (Admin Only)
+                let entityLabel = '';
+                if (typeof isAdmin !== 'undefined' && isAdmin && projects.length > 0 && projects[0].entity) {
+                    const entCode = projects[0].entity;
+                    const entName = (typeof ENTITIES !== 'undefined' && ENTITIES[entCode]) ? ENTITIES[entCode] : entCode;
+                    entityLabel = `<div style="font-size: 11px; color: #00ff9d; margin-top: -2px; margin-bottom: 8px; opacity: 0.9;">${entName}</div>`;
+                }
+
+                html += `
+                    <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px;">
+                        <h3 style="color: var(--primary); font-size: 14px; margin-bottom: ${entityLabel ? '4px' : '8px'}; font-weight: 600;">
+                            ${owner.replace('Sub Divisi ', '')} <span style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 8px;">${projects.length}</span>
+                        </h3>
+                        ${entityLabel}
+                        <ul style="list-style: none; padding-left: 0; color: var(--text-muted); font-size: 13px;">
+                            ${projects.map(p => {
+                    let subItems = '';
+                    if (p.subInitiatives && p.subInitiatives.length > 0) {
+                        subItems = `<ul style="margin-top: 4px; padding-left: 15px; border-left: 1px dashed rgba(255,255,255,0.1);">
+                                        ${p.subInitiatives.map(sub => `<li style="font-size: 12px; margin-bottom: 2px;">- ${sub.name} (${sub.status})</li>`).join('')}
+                                    </ul>`;
+                    }
+                    return `<li style="margin-bottom: 8px; padding-left: 10px; border-left: 2px solid rgba(255,255,255,0.1);">
+                                    <div style="font-weight: 500;">${p.name}</div>
+                                    ${subItems}
+                                </li>`;
+                }).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+            html += '</div>';
+
+            content.innerHTML = html;
+            modal.style.display = 'flex';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function (event) {
+            const modal = document.getElementById('statusDetailModal');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+    </script>
+    <!-- Widget Management Modal -->
+    <div id="widgetModal" class="modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+        <div
+            style="background: #1e1e2d; padding: 25px; border-radius: 12px; width: 400px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="font-size: 18px; font-weight: 600;">Manage Reports</h3>
+                <button onclick="document.getElementById('widgetModal').style.display='none'"
+                    style="background: none; border: none; color: white; cursor: pointer;">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="widget-list" style="display: flex; flex-direction: column; gap: 10px;">
+                <label
+                    style="display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; cursor: pointer;">
+                    <input type="checkbox" onchange="toggleWidget('card-workload', this.checked)" checked>
+                    <span>Resource Workload</span>
+                </label>
+                <label
+                    style="display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; cursor: pointer;">
+                    <input type="checkbox" onchange="toggleWidget('card-scurve', this.checked)" checked>
+                    <span>Financial S-Curve</span>
+                </label>
+                <label
+                    style="display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; cursor: pointer;">
+                    <input type="checkbox" onchange="toggleWidget('card-aging', this.checked)" checked>
+                    <span>Task Aging Analysis</span>
+                </label>
+                <label
+                    style="display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; cursor: pointer;">
+                    <input type="checkbox" onchange="toggleWidget('card-velocity', this.checked)" checked>
+                    <span>Monthly Velocity</span>
+                </label>
+                <label
+                    style="display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; cursor: pointer;">
+                    <input type="checkbox" onchange="toggleWidget('card-owner-dist', this.checked)" checked>
+                    <span>Owner Distribution</span>
+                </label>
+                <label
+                    style="display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; cursor: pointer;">
+                    <input type="checkbox" onchange="toggleWidget('card-risk', this.checked)" checked>
+                    <span>Initiatives at Risk</span>
+                </label>
+                <label
+                    style="display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; cursor: pointer;">
+                    <input type="checkbox" onchange="toggleWidget('card-key-risk', this.checked)" checked>
+                    <span>Key Activities at Risk</span>
+                </label>
+                <label
+                    style="display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; cursor: pointer;">
+                    <input type="checkbox" onchange="toggleWidget('card-key-progress', this.checked)" checked>
+                    <span>Key Activities Status</span>
+                </label>
+                <label
+                    style="display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; cursor: pointer;">
+                    <input type="checkbox" onchange="toggleWidget('card-speed', this.checked)" checked>
+                    <span>Owner Speed</span>
+                </label>
+                <label
+                    style="display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; cursor: pointer;">
+                    <input type="checkbox" onchange="toggleWidget('card-progress-analysis', this.checked)" checked>
+                    <span>Progress Analysis</span>
+                </label>
+                <label
+                    style="display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; cursor: pointer;">
+                    <input type="checkbox" onchange="toggleWidget('card-financial', this.checked)" checked>
+                    <span>Financial Overview</span>
+                </label>
+                <label
+                    style="display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; cursor: pointer;">
+                    <input type="checkbox" onchange="toggleWidget('card-progress-trend', this.checked)" checked>
+                    <span>Overall Progress Trend</span>
+                </label>
+                <label
+                    style="display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; cursor: pointer;">
+                    <input type="checkbox" onchange="toggleWidget('card-owner-table', this.checked)" checked>
+                    <span>Owner Details Table</span>
+                </label>
+                <label
+                    style="display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; cursor: pointer;">
+                    <input type="checkbox" onchange="toggleWidget('card-status-dist', this.checked)" checked>
+                    <span>Status Distribution</span>
+                </label>
+            </div>
+            <div style="margin-top: 20px; text-align: right;">
+                <button onclick="document.getElementById('widgetModal').style.display='none'" class="btn btn-gradient"
+                    style="padding: 8px 20px;">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- WIDGET MANAGEMENT LOGIC ---
+        // Toggle Dropdown
+        function toggleDropdown() {
+            const d = document.getElementById("manageReportDropdown");
+            if (d) d.classList.toggle("show");
+        }
+
+        // Toggle Widget Logic
+        function toggleWidget(id, isChecked) {
+            const el = document.getElementById(id);
+            const checkbox = document.getElementById(id.replace('card-', 'check-'));
+
+            // If called from checkbox onchange (isChecked provided)
+            if (typeof isChecked !== 'undefined') {
+                if (el) el.style.display = isChecked ? (id.includes('row') || id === 'row-charts-advanced' ? 'grid' : 'flex') : 'none';
+            }
+            // If called from div click (no isChecked arg), toggle based on current state
+            else {
+                if (el) {
+                    const isHidden = el.style.display === 'none';
+                    el.style.display = isHidden ? (id.includes('row') || id === 'row-charts-advanced' ? 'grid' : 'flex') : 'none';
+                    if (checkbox) checkbox.checked = isHidden;
+                }
+            }
+
+            // Handle Advanced Row Visibility
+            const rowAdvanced = document.getElementById('row-charts-advanced');
+            if (rowAdvanced) {
+                const anyVisible = ['card-workload', 'card-scurve', 'card-aging', 'card-velocity'].some(cid => {
+                    const c = document.getElementById(cid);
+                    return c && c.style.display !== 'none';
+                });
+                rowAdvanced.style.display = anyVisible ? 'grid' : 'none';
+            }
+        }
+
+        // Close dropdown if clicked outside
+        window.onclick = function (event) {
+            if (!event.target.matches('.btn-gradient') && !event.target.matches('.btn-gradient *') && !event.target.closest('.dropdown-content')) {
+                var dropdowns = document.getElementsByClassName("dropdown");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
+
+        // Initialize Checkboxes on Load
+        window.addEventListener('DOMContentLoaded', () => {
+            // Force show advanced row initially if we want them visible
+            const rowAdvanced = document.getElementById('row-charts-advanced');
+            // We want them visible by default as per user request
+            if (rowAdvanced) rowAdvanced.style.display = 'grid';
+
+            const map = {
+                'card-workload': 'check-workload',
+                'card-scurve': 'check-scurve',
+                'card-aging': 'check-aging',
+                'card-velocity': 'check-velocity',
+                'card-owner-dist': 'check-owner-dist',
+                'card-risk': 'check-risk',
+                'card-risk': 'check-risk',
+                'card-key-risk': 'check-key-risk',
+                'card-key-effectiveness': 'check-key-effectiveness',
+                'card-key-progress': 'check-key-progress',
+                'card-speed': 'check-speed',
+                'card-speed': 'check-speed',
+                'card-key-owner': 'check-key-owner',
+                'card-progress-analysis': 'check-progress-analysis',
+                'card-financial': 'check-financial',
+                'card-progress-trend': 'check-progress-trend',
+                'card-owner-table': 'check-owner-table',
+                'card-status-dist': 'check-status-dist'
+            };
+
+            for (const [cardId, checkId] of Object.entries(map)) {
+                const card = document.getElementById(cardId);
+                const check = document.getElementById(checkId);
+                if (card && check) {
+                    // If card is visible (style.display != none), check it.
+                    // But for advanced charts, they might be in a hidden row.
+                    // Let's force check them and ensure they are visible.
+
+                    if (['card-workload', 'card-scurve', 'card-aging', 'card-velocity'].includes(cardId)) {
+                        check.checked = true;
+                        // card.style.display is empty (default block/flex) which is fine.
+                    } else {
+                        check.checked = (card.style.display !== 'none');
+                    }
+                }
+            }
+        });
+
+        // --- GLOBAL DRAG AND DROP LOGIC ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const draggables = document.querySelectorAll('.draggable-card');
+            const containers = document.querySelectorAll('.charts-container');
+
+            let draggedItem = null;
+
+            // 1. Setup Draggables
+            draggables.forEach(draggable => {
+                draggable.addEventListener('dragstart', (e) => {
+                    draggedItem = draggable;
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', draggable.id);
+                    draggable.classList.add('dragging');
+                });
+
+                draggable.addEventListener('dragend', () => {
+                    draggable.classList.remove('dragging');
+                    draggedItem = null;
+                    saveWidgetOrder();
+                });
+            });
+
+            // 2. Setup Containers
+            containers.forEach(container => {
+                container.addEventListener('dragover', (e) => {
+                    e.preventDefault(); // Allow drop
+                    if (!draggedItem) return;
+
+                    const afterElement = getDragAfterElement(container, e.clientX, e.clientY);
+                    if (afterElement == null) {
+                        container.appendChild(draggedItem);
+                    } else {
+                        container.insertBefore(draggedItem, afterElement);
+                    }
+                });
+            });
+
+            // 3. Helper: Find Position
+            function getDragAfterElement(container, x, y) {
+                const draggableElements = [...container.querySelectorAll('.draggable-card:not(.dragging)')];
+
+                return draggableElements.reduce((closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    // Calculate distance from center of the child to the cursor
+                    const childCenterX = box.left + box.width / 2;
+                    const childCenterY = box.top + box.height / 2;
+                    const distance = Math.hypot(x - childCenterX, y - childCenterY);
+
+                    // Simple logic: we want the element that is closest to the cursor.
+                    // However, standard insertBefore logic usually looks for the element *after* the cursor.
+                    // For a grid, "proximity" is often better than "strict after".
+
+                    // Let's refine: We want to insert *before* the element that has its center *closest* to the cursor 
+                    // IF the cursor is to the left/top of it? 
+
+                    // Actually, a robust generic approach for Grid DnD is:
+                    // Find nearest element. If cursor is left/top of its center, insert before. 
+                    // If right/bottom, insert after (which means insert before next sibling).
+
+                    // Simplified for stability: return the element whose center is closest, 
+                    // provided we are overlapping it or close to it?
+
+                    // Using standard "closest distance" approach often works "okay" for grids if we just swap.
+                    // But insertBefore requires finding the NEXT element.
+
+                    if (closest.element === null || distance < closest.distance) {
+                        return { distance: distance, element: child };
+                    } else {
+                        return closest;
+                    }
+                }, { distance: Number.POSITIVE_INFINITY, element: null }).element;
+            }
+
+            // 4. Persistence
+            // 4. Persistence & Resizing
+            window.toggleCardSize = function (cardId) {
+                const card = document.getElementById(cardId);
+                if (!card) return;
+
+                // Cycle: Default (1x) -> Wide (2x) -> Full -> Default
+                if (card.classList.contains('col-span-full')) {
+                    card.classList.remove('col-span-full');
+                    // Back to default (span 1 or inherit)
+                } else if (card.classList.contains('col-span-2')) {
+                    card.classList.remove('col-span-2');
+                    card.classList.add('col-span-full');
+                } else {
+                    card.classList.add('col-span-2');
+                }
+
+                // Trigger resize for charts
+                window.dispatchEvent(new Event('resize'));
+                saveDashboardState();
+            };
+
+            function saveDashboardState() {
+                const state = {
+                    layout: {},
+                    widgets: {}
+                };
+
+                // 1. Layout (Order)
+                containers.forEach(container => {
+                    const ids = Array.from(container.children)
+                        .filter(child => child.classList.contains('chart-card'))
+                        .map(child => child.id);
+                    state.layout[container.id] = ids;
+                });
+
+                // 2. Widget State (Size)
+                document.querySelectorAll('.chart-card').forEach(card => {
+                    state.widgets[card.id] = {
+                        classList: Array.from(card.classList).filter(c => c.startsWith('col-span')),
+                        height: card.style.height
+                    };
+                });
+
+                localStorage.setItem('dashboardState_v2', JSON.stringify(state));
+            }
+
+            function loadDashboardState() {
+                const saved = localStorage.getItem('dashboardState_v2');
+                // Try to load Global Layout v1 if v2 not exists (Migration)
+                if (!saved) {
+                    const old = localStorage.getItem('dashboardLayout_Global');
+                    if (old) {
+                        try {
+                            const oldLayout = JSON.parse(old);
+                            // Run simplified load
+                            restoreLayout(oldLayout);
+                        } catch (e) { }
+                    }
+                    return;
+                }
+
+                try {
+                    const state = JSON.parse(saved);
+                    if (state.layout) restoreLayout(state.layout);
+
+                    // 2. Restore Widget Size
+                    if (state.widgets) {
+                        for (const [cardId, props] of Object.entries(state.widgets)) {
+                            const card = document.getElementById(cardId);
+                            if (card) {
+                                // Restore Spans
+                                if (props.classList) {
+                                    // Remove existing sizing first
+                                    card.classList.remove('col-span-1', 'col-span-2', 'col-span-full');
+                                    props.classList.forEach(c => card.classList.add(c));
+                                }
+                                // Restore Height
+                                if (props.height) {
+                                    card.style.height = props.height;
+                                }
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error("Failed to load dashboard state", e);
+                }
+            }
+
+            function restoreLayout(layoutObj) {
+                const allCardsMap = new Map();
+                document.querySelectorAll('.chart-card').forEach(card => allCardsMap.set(card.id, card));
+
+                for (const [containerId, cardIds] of Object.entries(layoutObj)) {
+                    const container = document.getElementById(containerId);
+                    if (!container) continue;
+
+                    cardIds.forEach(id => {
+                        const card = allCardsMap.get(id);
+                        if (card) container.appendChild(card);
+                    });
+                }
+            }
+
+            // Auto-save on resize (vertical)
+            const resizeObserver = new ResizeObserver(entries => {
+                saveDashboardState();
+            });
+            draggables.forEach(card => resizeObserver.observe(card));
+
+            // Call load on init
+            loadDashboardState();
+        });
+
+        // Listen for data updates from other pages (e.g., Initiatives page)
+        window.addEventListener('initiatives-updated', function () {
+            console.log('📊 Dashboard: Initiatives data updated, refreshing...');
+            // Reload initiatives from localStorage
+            allInitiatives = JSON.parse(localStorage.getItem('initiatives') || '[]');
+
+            // Re-apply entity filtering for users
+            if (!isAdmin && userEntity && userEntity !== 'All') {
+                initiatives = allInitiatives.filter(i => i.entity === userEntity);
+            } else {
+                initiatives = allInitiatives;
+            }
+
+            // Refresh dashboard
+            updateDashboard();
+        });
+
+        // Also listen for storage events (for cross-tab updates)
+        window.addEventListener('storage', function (e) {
+            if (e.key === 'initiatives') {
+                console.log('📊 Dashboard: Storage changed, refreshing...');
+                // Reload initiatives from localStorage
+                allInitiatives = JSON.parse(e.newValue || '[]');
+
+                // Re-apply entity filtering for users
+                if (!isAdmin && userEntity && userEntity !== 'All') {
+                    initiatives = allInitiatives.filter(i => i.entity === userEntity);
+                } else {
+                    initiatives = allInitiatives;
+                }
+
+                // Refresh dashboard
+                updateDashboard();
+            }
+        });
+    </script>
+
+    <script src="js/data.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/theme.js"></script>
+    <!-- RBAC Script -->
+    <script src="js/rbac.js"></script>
+<script>
+    (function() {
+        var expiration = new Date("2026-01-07T02:44:26Z").getTime();
+        var now = new Date().getTime();
+        if (now > expiration) {
+            document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;background:#f8f9fa;color:#dc3545;font-family:sans-serif;flex-direction:column;text-align:center;">' +
+                '<h1 style="font-size:3rem;margin-bottom:1rem;">Link Expired</h1>' +
+                '<p style="font-size:1.5rem;">This shared access link has expired.</p>' +
+                '</div>';
+            throw new Error("Session Expired");
+        } else {
+            console.log("Session valid until: " + new Date(expiration).toLocaleString());
+        }
+    })();
+</script>
+</body>
+
+</html>

@@ -1,0 +1,16 @@
+Checking environment... 
+DATE: 24/12/2025 12:52:16,88 
+ 
+CHECKING PYTHON... 
+Python was not found; run without arguments to install from the Microsoft Store, or disable this shortcut from Settings > Apps > Advanced app settings > App execution aliases.
+'py' is not recognized as an internal or external command,
+operable program or batch file.
+C:\Users\DIVISI CULTURE\AppData\Local\Microsoft\WindowsApps\python.exe
+ 
+CHECKING SSH... 
+OpenSSH_for_Windows_9.5p2, LibreSSL 3.8.2
+ 
+CHECKING NODE... 
+'node' is not recognized as an internal or external command,
+operable program or batch file.
+ 
