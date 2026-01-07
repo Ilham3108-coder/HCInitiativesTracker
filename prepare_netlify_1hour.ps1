@@ -57,4 +57,4 @@ Write-Host "Folder: $distDir" -ForegroundColor White
 Write-Host "1. Go to https://app.netlify.com/drop" -ForegroundColor White
 Write-Host "2. Drag and drop the 'dist-netlify' folder there." -ForegroundColor White
 Write-Host "==============================================" -ForegroundColor Cyan
-pause
+# pause

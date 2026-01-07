@@ -262,11 +262,16 @@
                 <!-- Global Filter -->
                 <div id="globalFilterContainer"
                     style="background: rgba(255,255,255,0.05); padding: 5px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; gap: 10px;">
-                    <select id="filterEntity" class="bg-transparent text-white border-none outline-none text-xs"
-                        style="max-width: 150px;">
-                        <option value="All" style="background: #1a1a2e; color: white;">All Entities</option>
-                        <!-- Populated by JS -->
-                    </select>
+                    <div class="custom-dropdown" id="entityDropdownContainer" style="display:none;">
+                        <button class="dropdown-trigger" onclick="toggleEntityDropdown()" id="entityDropdownTrigger">All
+                            Entities</button>
+                        <div class="checkbox-dropdown-menu" id="entityDropdownMenu">
+                            <label><input type="checkbox" value="All" onchange="toggleAllEntities(this)" checked> All
+                                Entities</label>
+                            <hr>
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
                     <div id="entityDivider" style="width: 1px; background: rgba(255,255,255,0.2);"></div>
                     <div class="custom-dropdown" id="monthDropdownContainer">
                         <button class="dropdown-trigger" onclick="toggleMonthDropdown()" id="monthDropdownTrigger">All
@@ -302,21 +307,16 @@
                         </div>
                     </div>
                     <div style="width: 1px; background: rgba(255,255,255,0.2);"></div>
-                    <select id="filterYear" class="bg-transparent text-white border-none outline-none text-xs">
-                        <option value="All" style="background: #1a1a2e; color: white;">All Years</option>
-                        <option value="2024" style="background: #1a1a2e; color: white;">2024</option>
-                        <option value="2025" style="background: #1a1a2e; color: white;">2025</option>
-                        <option value="2026" style="background: #1a1a2e; color: white;">2026</option>
-                        <option value="2027" style="background: #1a1a2e; color: white;">2027</option>
-                        <option value="2028" style="background: #1a1a2e; color: white;">2028</option>
-                        <option value="2029" style="background: #1a1a2e; color: white;">2029</option>
-                        <option value="2030" style="background: #1a1a2e; color: white;">2030</option>
-                        <option value="2031" style="background: #1a1a2e; color: white;">2031</option>
-                        <option value="2032" style="background: #1a1a2e; color: white;">2032</option>
-                        <option value="2033" style="background: #1a1a2e; color: white;">2033</option>
-                        <option value="2034" style="background: #1a1a2e; color: white;">2034</option>
-                        <option value="2035" style="background: #1a1a2e; color: white;">2035</option>
-                    </select>
+                    <div class="custom-dropdown" id="yearDropdownContainer" style="display:none;">
+                        <button class="dropdown-trigger" onclick="toggleYearDropdown()" id="yearDropdownTrigger">All
+                            Years</button>
+                        <div class="checkbox-dropdown-menu" id="yearDropdownMenu">
+                            <label><input type="checkbox" value="All" onchange="toggleAllYears(this)" checked> All
+                                Years</label>
+                            <hr>
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
                     <button onclick="applyGlobalFilter()"
                         style="background: var(--primary); border: none; border-radius: 4px; color: black; font-weight: bold; padding: 2px 8px; cursor: pointer; font-size: 11px;">Apply</button>
                 </div>
@@ -823,23 +823,45 @@
         const userEntity = currentUser?.entity || 'All';
 
         // Populate Entity Filter
-        const entitySelect = document.getElementById('filterEntity');
-        if (typeof ENTITIES !== 'undefined') {
+        // Populate Entity Filter (Multi-Select)
+        const entityMenu = document.getElementById('entityDropdownMenu');
+        if (typeof ENTITIES !== 'undefined' && isAdmin) {
+            document.getElementById('entityDropdownContainer').style.display = 'block';
+            document.getElementById('yearDropdownContainer').style.display = 'block';
+
             for (const [key, value] of Object.entries(ENTITIES)) {
-                const opt = document.createElement('option');
-                opt.value = key;
-                opt.innerText = value;
-                opt.style.background = '#1a1a2e';
-                opt.style.color = 'white';
-                entitySelect.appendChild(opt);
+                const label = document.createElement('label');
+                label.innerHTML = `<input type="checkbox" value="${key}" class="entity-check" onchange="updateEntityLabel()"> ${value}`;
+                entityMenu.appendChild(label);
             }
+        }
+
+        // Populate Year Filter (Dynamic from Data)
+        const yearMenu = document.getElementById('yearDropdownMenu');
+        if (isAdmin) {
+            const availableYears = new Set();
+            allInitiatives.forEach(i => {
+                if (i.dueDate) {
+                    availableYears.add(new Date(i.dueDate).getFullYear());
+                }
+            });
+            // Add future years if needed or just available ones. Let's add range +2 years from current?
+            // Or just strictly what's in data. Let's stick to data + current year at least.
+            const currentYear = new Date().getFullYear();
+            availableYears.add(currentYear);
+
+            const sortedYears = Array.from(availableYears).sort((a, b) => a - b);
+
+            sortedYears.forEach(y => {
+                const label = document.createElement('label');
+                label.innerHTML = `<input type="checkbox" value="${y}" class="year-check" onchange="updateYearLabel()"> ${y}`;
+                yearMenu.appendChild(label);
+            });
         }
 
         // Hide entity filter for non-admin users
         if (!isAdmin) {
-            const entityFilterEl = document.getElementById('filterEntity');
-            const entityDivider = document.getElementById('entityDivider');
-            if (entityFilterEl) entityFilterEl.style.display = 'none';
+            // Non-admin logic already handled by default display:none of containers
             if (entityDivider) entityDivider.style.display = 'none';
 
             // Auto-filter by user entity
@@ -850,7 +872,86 @@
 
         // Global Filter Logic
 
-        // --- Multi-Select Dropdown Logic ---
+        // --- Multi-Select Dropdown Logic for ENTITY ---
+        function toggleEntityDropdown() {
+            const menu = document.getElementById('entityDropdownMenu');
+            menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+        }
+
+        function toggleAllEntities(source) {
+            const checkboxes = document.querySelectorAll('.entity-check');
+            checkboxes.forEach(cb => cb.checked = source.checked);
+            updateEntityLabel();
+        }
+
+        function updateEntityLabel() {
+            const checkboxes = document.querySelectorAll('.entity-check:checked');
+            const total = document.querySelectorAll('.entity-check').length;
+            const trigger = document.getElementById('entityDropdownTrigger');
+            const allCheck = document.querySelector('input[value="All"][onchange="toggleAllEntities(this)"]');
+
+            if (checkboxes.length === total) {
+                trigger.innerText = 'All Entities';
+                allCheck.checked = true;
+                allCheck.indeterminate = false;
+            } else if (checkboxes.length === 0) {
+                trigger.innerText = 'Select Entity';
+                allCheck.checked = false;
+                allCheck.indeterminate = false;
+            } else {
+                allCheck.checked = false;
+                allCheck.indeterminate = true;
+                if (checkboxes.length <= 1) {
+                    // Find the label text for the selected value
+                    const val = checkboxes[0].value;
+                    // Only have val (key), need text. 
+                    // Simple lookup in ENTITIES
+                    trigger.innerText = ENTITIES[val] || val;
+                } else {
+                    trigger.innerText = `${checkboxes.length} Selected`;
+                }
+            }
+        }
+
+        // --- Multi-Select Dropdown Logic for YEAR ---
+        function toggleYearDropdown() {
+            const menu = document.getElementById('yearDropdownMenu');
+            menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+        }
+
+        function toggleAllYears(source) {
+            const checkboxes = document.querySelectorAll('.year-check');
+            checkboxes.forEach(cb => cb.checked = source.checked);
+            updateYearLabel();
+        }
+
+        function updateYearLabel() {
+            const checkboxes = document.querySelectorAll('.year-check:checked');
+            const total = document.querySelectorAll('.year-check').length;
+            const trigger = document.getElementById('yearDropdownTrigger');
+            const allCheck = document.querySelector('input[value="All"][onchange="toggleAllYears(this)"]');
+
+            if (checkboxes.length === total) {
+                trigger.innerText = 'All Years';
+                allCheck.checked = true;
+                allCheck.indeterminate = false;
+            } else if (checkboxes.length === 0) {
+                trigger.innerText = 'Select Year';
+                allCheck.checked = false;
+                allCheck.indeterminate = false;
+            } else {
+                allCheck.checked = false;
+                allCheck.indeterminate = true;
+                if (checkboxes.length <= 2) {
+                    const vals = Array.from(checkboxes).map(c => c.value);
+                    trigger.innerText = vals.join(', ');
+                } else {
+                    trigger.innerText = `${checkboxes.length} Selected`;
+                }
+            }
+        }
+
+        // --- Multi-Select Dropdown Logic for MONTH (Existing) ---
         function toggleMonthDropdown() {
             const menu = document.getElementById('monthDropdownMenu');
             // Toggle Logic
@@ -873,7 +974,7 @@
             const checkboxes = document.querySelectorAll('.month-check:checked');
             const total = document.querySelectorAll('.month-check').length;
             const trigger = document.getElementById('monthDropdownTrigger');
-            const allCheck = document.querySelector('input[value="All"]');
+            const allCheck = document.querySelector('#monthDropdownMenu input[value="All"]');
 
             if (checkboxes.length === total) {
                 trigger.innerText = 'All Months';
@@ -902,30 +1003,64 @@
 
         // Close dropdown when clicking outside
         window.addEventListener('click', function (e) {
-            const container = document.getElementById('monthDropdownContainer');
-            if (container && !container.contains(e.target)) {
-                document.getElementById('monthDropdownMenu').style.display = 'none';
+            // Month
+            const mContainer = document.getElementById('monthDropdownContainer');
+            if (mContainer && !mContainer.contains(e.target)) {
+                const menu = document.getElementById('monthDropdownMenu');
+                if (menu) menu.style.display = 'none';
+            }
+            // Entity
+            const eContainer = document.getElementById('entityDropdownContainer');
+            if (eContainer && !eContainer.contains(e.target)) {
+                const menu = document.getElementById('entityDropdownMenu');
+                if (menu) menu.style.display = 'none';
+            }
+            // Year
+            const yContainer = document.getElementById('yearDropdownContainer');
+            if (yContainer && !yContainer.contains(e.target)) {
+                const menu = document.getElementById('yearDropdownMenu');
+                if (menu) menu.style.display = 'none';
             }
         });
 
         window.applyGlobalFilter = function () {
-            const entity = document.getElementById('filterEntity').value;
-            // Get Selected Months
+            // ENTITY FILTER
+            let selectedEntities = [];
+            const isAllEntities = document.querySelector('#entityDropdownMenu input[value="All"]').checked;
+
+            if (!isAllEntities) {
+                const entityChecks = document.querySelectorAll('.entity-check:checked');
+                selectedEntities = Array.from(entityChecks).map(cb => cb.value);
+            }
+
+            // YEAR FILTER
+            let selectedYears = [];
+            const isAllYears = document.querySelector('#yearDropdownMenu input[value="All"]').checked;
+            if (!isAllYears) {
+                const yearChecks = document.querySelectorAll('.year-check:checked');
+                selectedYears = Array.from(yearChecks).map(cb => parseInt(cb.value));
+            }
+
+            // MONTH FILTER
             const monthCheckboxes = document.querySelectorAll('.month-check:checked');
             const selectedMonths = Array.from(monthCheckboxes).map(cb => parseInt(cb.value));
-            const isAllMonths = document.querySelector('input[value="All"]').checked || monthCheckboxes.length === 12;
+            const isAllMonths = document.querySelector('#monthDropdownMenu input[value="All"]').checked || monthCheckboxes.length === 12;
 
-            const year = document.getElementById('filterYear').value;
 
             // Start with appropriate base data
             // For non-admin users, always start with their entity's data
             if (!isAdmin && userEntity && userEntity !== 'All') {
                 initiatives = allInitiatives.filter(i => i.entity === userEntity);
             } else if (isAdmin) {
-                // Admin can start with all or filter by selected entity
+                // Admin logic
                 initiatives = allInitiatives;
-                if (entity !== 'All') {
-                    initiatives = initiatives.filter(i => i.entity === entity);
+                if (!isAllEntities) {
+                    if (selectedEntities.length > 0) {
+                        initiatives = initiatives.filter(i => selectedEntities.includes(i.entity));
+                    } else {
+                        // Nothing selected?
+                        initiatives = [];
+                    }
                 }
             }
 
@@ -937,19 +1072,20 @@
                     return selectedMonths.includes(d.getMonth());
                 });
             } else if (selectedMonths.length === 0 && !isAllMonths) {
-                // Nothing selected? Usually show nothing, or show all? 
-                // Let's assume show nothing if explicitly everything is unchecked.
                 initiatives = [];
             }
 
-            // Filter by year
-            if (year !== 'All') {
+            // Filter by year (Multi-Select)
+            if (!isAllYears && selectedYears.length > 0) {
                 initiatives = initiatives.filter(i => {
                     if (!i.dueDate) return false;
                     const d = new Date(i.dueDate);
-                    return d.getFullYear() === parseInt(year);
+                    return selectedYears.includes(d.getFullYear());
                 });
+            } else if (selectedYears.length === 0 && !isAllYears) {
+                initiatives = [];
             }
+
 
             // Re-Render All
             updateDashboard();
@@ -982,30 +1118,12 @@
 
 
         function getActiveOwners() {
-            const entityFilter = document.getElementById('filterEntity') ? document.getElementById('filterEntity').value : 'All';
-
-            if (entityFilter === 'All') {
-                // If All, showing 50+ owners is messy. 
-                // Option A: Show all. 
-                // Option B: Show owners who actually have initiatives in the filtered View.
-                // Let's go with B: Dynamic owners based on data.
-                if (initiatives.length > 0) {
-                    const ownersWithData = [...new Set(initiatives.map(i => i.owner))];
-                    // Sort them if possible? Or just return. 
-                    // We might want to include "empty" owners if a specific entity is selected, but for ALL, only showing active ones makes sense.
-                    return ownersWithData;
-                }
-                // Fallback if no data
-                if (typeof OWNERS_BY_ENTITY !== 'undefined') {
-                    const all = [];
-                    Object.values(OWNERS_BY_ENTITY).forEach(arr => all.push(...arr));
-                    return [...new Set(all)];
-                }
-                return PROJECT_OWNERS;
-            } else {
-                // Specific Entity: Show ALL defined owners for that entity (even if 0 projects) to show "gaps"
-                return OWNERS_BY_ENTITY[entityFilter] || PROJECT_OWNERS;
+            // Simplified for Multi-Select: Always derive from filtered initiatives
+            if (initiatives && initiatives.length > 0) {
+                const ownersWithData = [...new Set(initiatives.map(i => i.owner))];
+                return ownersWithData;
             }
+            return [];
         }
 
 
@@ -1955,7 +2073,7 @@
     <script src="js/rbac.js"></script>
 <script>
     (function() {
-        var expiration = new Date("2026-01-07T02:44:26Z").getTime();
+        var expiration = new Date("2026-01-07T07:44:20Z").getTime();
         var now = new Date().getTime();
         if (now > expiration) {
             document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;background:#f8f9fa;color:#dc3545;font-family:sans-serif;flex-direction:column;text-align:center;">' +
