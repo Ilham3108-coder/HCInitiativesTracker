@@ -175,6 +175,11 @@
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             margin: 5px 0;
         }
+
+        /* Admin Entity Filter - Prevent Wrapping */
+        #entityDropdownMenu label {
+            white-space: nowrap;
+        }
     </style>
 </head>
 
@@ -2073,7 +2078,7 @@
     <script src="js/rbac.js"></script>
 <script>
     (function() {
-        var expiration = new Date("2026-01-07T07:44:20Z").getTime();
+        var expiration = new Date("2026-01-07T08:04:49Z").getTime();
         var now = new Date().getTime();
         if (now > expiration) {
             document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;background:#f8f9fa;color:#dc3545;font-family:sans-serif;flex-direction:column;text-align:center;">' +
