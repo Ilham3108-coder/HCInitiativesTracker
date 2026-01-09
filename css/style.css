@@ -427,10 +427,10 @@ a {
 }
 
 .entity-btn.active {
-    background: var(--primary);
-    color: black;
+    background: linear-gradient(135deg, #0088ff, #00f2ea);
+    color: white;
     font-weight: 600;
-    box-shadow: 0 4px 12px rgba(0, 238, 187, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 136, 255, 0.3);
 }
 
 /* Owner Grid */

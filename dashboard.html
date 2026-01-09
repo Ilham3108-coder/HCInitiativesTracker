@@ -180,6 +180,141 @@
         #entityDropdownMenu label {
             white-space: nowrap;
         }
+
+        /* =========== HEATMAP STYLES =========== */
+        @keyframes bubble-pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.03);
+            }
+        }
+
+        @keyframes bubble-float {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.08);
+            }
+        }
+
+        @keyframes live-pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        @keyframes bubble-fade-in {
+            from {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .heatmap-bubble {
+            position: relative;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 1;
+            margin: -8px;
+            /* Overlapping effect */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            animation: bubble-fade-in 0.5s ease forwards, bubble-float 4s ease-in-out infinite;
+            animation-delay: var(--delay, 0s), var(--delay, 0s);
+        }
+
+        .heatmap-bubble::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: inherit;
+            opacity: 0.4;
+            transform: scale(1.3);
+            z-index: -1;
+        }
+
+        .heatmap-bubble:hover {
+            transform: scale(1.15) !important;
+            z-index: 10;
+            box-shadow: 0 0 25px currentColor, 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .heatmap-bubble.normal {
+            background: linear-gradient(135deg, #00d997, #00b378);
+            color: white;
+        }
+
+        .heatmap-bubble.warning {
+            background: linear-gradient(135deg, #f5a623, #e69500);
+            color: white;
+        }
+
+        .heatmap-bubble.critical {
+            background: linear-gradient(135deg, #ff0055, #cc0044);
+            color: white;
+        }
+
+        .heatmap-bubble .bubble-inner {
+            width: 50%;
+            height: 50%;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: #333;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .heatmap-tooltip {
+            position: absolute;
+            bottom: calc(100% + 10px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            z-index: 100;
+        }
+
+        .heatmap-bubble:hover .heatmap-tooltip {
+            opacity: 1;
+        }
     </style>
 </head>
 
@@ -246,6 +381,30 @@
                     Logout</button>
                 <button onclick="closeLogoutModal()"
                     style="padding: 12px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Initiative Detail Modal (Heatmap) -->
+    <div id="heatmapInitiativeModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 10000; align-items: center; justify-content: center;">
+        <div
+            style="background: linear-gradient(135deg, rgba(21, 21, 34, 0.98), rgba(26, 31, 46, 0.98)); border-radius: 16px; max-width: 650px; width: 95%; max-height: 85vh; overflow-y: auto; padding: 0; border: 1px solid rgba(0, 238, 187, 0.3); box-shadow: 0 20px 60px rgba(0, 238, 187, 0.3);">
+            <!-- Header -->
+            <div
+                style="padding: 20px 25px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: rgba(21, 21, 34, 0.98); z-index: 1;">
+                <h3 style="margin: 0; font-size: 18px; color: white; display: flex; align-items: center; gap: 10px;">
+                    <i data-lucide="info" style="width: 20px; height: 20px; color: var(--primary);"></i>
+                    Initiative Details
+                </h3>
+                <button onclick="closeHeatmapModal()"
+                    style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 5px;">
+                    <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+                </button>
+            </div>
+            <!-- Content -->
+            <div id="heatmapModalContent" style="padding: 25px;">
+                <!-- Content will be injected by JS -->
             </div>
         </div>
     </div>
@@ -392,6 +551,11 @@
                         <div class="dropdown-item" onclick="toggleWidget('card-status-dist')">
                             <span>Status Dist.</span>
                             <input type="checkbox" id="check-status-dist" checked>
+                        </div>
+                        <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 5px 0;">
+                        <div class="dropdown-item" onclick="toggleWidget('card-project-heatmap')">
+                            <span>Project Heatmap</span>
+                            <input type="checkbox" id="check-project-heatmap" checked>
                         </div>
                     </div>
                 </div>
@@ -776,6 +940,64 @@
                     Total
                     Initiatives: <span id="totalInitCount" style="color: white; font-weight: bold;">0</span></div>
                 <canvas id="statusDistChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+
+        <!-- Row 5: Project Heatmap -->
+        <div class="charts-container fade-in-up" style="grid-template-columns: 1fr;" id="row-charts-heatmap">
+            <div class="chart-card draggable-card" id="card-project-heatmap" draggable="true"
+                style="min-height: 400px;">
+                <div class="chart-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <i data-lucide="grip-vertical" class="drag-handle"></i>
+                        <div>
+                            <span style="font-size: 16px; font-weight: 600;">Project Health Heatmap</span>
+                            <div style="font-size: 11px; color: var(--text-muted);">
+                                <span id="heatmapTotalUnits">0</span> Initiatives • Timeline Status
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div
+                            style="display: flex; align-items: center; gap: 5px; background: rgba(0,255,157,0.1); padding: 4px 10px; border-radius: 20px; animation: live-pulse 2s infinite;">
+                            <i data-lucide="wifi" style="width: 14px; height: 14px; color: #00ff9d;"></i>
+                            <span style="font-size: 11px; color: #00ff9d; font-weight: 600;">LIVE</span>
+                        </div>
+                        <button onclick="toggleCardSize('card-project-heatmap')"
+                            style="background:none; border:none; color:var(--text-muted); cursor:pointer;"
+                            title="Resize">
+                            <i data-lucide="maximize-2" style="width:16px;"></i>
+                        </button>
+                        <button onclick="hideWidget('card-project-heatmap')"
+                            style="background:none; border:none; color:var(--text-muted); cursor:pointer;">
+                            <i data-lucide="x" style="width:16px;"></i>
+                        </button>
+                    </div>
+                </div>
+                <!-- Heatmap Container -->
+                <div id="heatmapBubblesContainer"
+                    style="position: relative; min-height: 300px; display: flex; flex-wrap: wrap; gap: 0; justify-content: center; align-items: center; padding: 20px;">
+                    <!-- Bubbles will be injected by JS -->
+                </div>
+                <!-- Legend -->
+                <div id="heatmapLegend"
+                    style="display: flex; justify-content: center; gap: 30px; padding: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="width: 12px; height: 12px; border-radius: 50%; background: #00d997;"></span>
+                        <span style="font-size: 12px; color: var(--text-muted);">ON TRACK (<span
+                                id="heatmapNormalCount">0</span>)</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="width: 12px; height: 12px; border-radius: 50%; background: #f5a623;"></span>
+                        <span style="font-size: 12px; color: var(--text-muted);">WARNING (<span
+                                id="heatmapWarningCount">0</span>)</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="width: 12px; height: 12px; border-radius: 50%; background: #ff0055;"></span>
+                        <span style="font-size: 12px; color: var(--text-muted);">CRITICAL (<span
+                                id="heatmapCriticalCount">0</span>)</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1415,7 +1637,272 @@
                 if (card) card.style.display = 'none';
             }
 
+            // --- 13. PROJECT HEATMAP ---
+            renderProjectHeatmap(initiatives);
+
         } // End updateDashboard
+
+        // --- PROJECT HEATMAP FUNCTION ---
+        function renderProjectHeatmap(initiatives) {
+            const container = document.getElementById('heatmapBubblesContainer');
+            if (!container) return;
+
+            container.innerHTML = ''; // Clear existing bubbles
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            let normalCount = 0;
+            let warningCount = 0;
+            let criticalCount = 0;
+
+            // Calculate bubble data
+            const bubbleData = initiatives.map((init, index) => {
+                const progress = parseInt(init.progress) || 0;
+                const dueDate = init.dueDate ? new Date(init.dueDate) : null;
+                const status = init.status || '';
+
+                let category = 'normal'; // Default
+
+                if (status === 'Done') {
+                    category = 'normal';
+                } else if (status === 'Cancelled') {
+                    category = 'normal'; // Grey could be added, but using normal for now
+                } else if (status === 'Not Started') {
+                    // Not started - check if due date is near
+                    if (dueDate) {
+                        const daysUntilDue = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+                        if (daysUntilDue < 0) {
+                            category = 'critical';
+                        } else if (daysUntilDue <= 14) {
+                            category = 'warning';
+                        }
+                    }
+                } else {
+                    // On Going, Hold, Carry Over
+                    if (dueDate) {
+                        const daysUntilDue = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+                        if (daysUntilDue < 0) {
+                            category = 'critical';
+                        } else if (daysUntilDue <= 14) {
+                            category = 'warning';
+                        } else {
+                            category = 'normal';
+                        }
+                    }
+                }
+
+                // Count categories
+                if (category === 'normal') normalCount++;
+                else if (category === 'warning') warningCount++;
+                else if (category === 'critical') criticalCount++;
+
+                return {
+                    id: init.id,
+                    name: init.name,
+                    progress: progress,
+                    dueDate: init.dueDate,
+                    status: status,
+                    category: category,
+                    index: index
+                };
+            });
+
+            // Size range for bubbles (in pixels)
+            const minSize = 60;
+            const maxSize = 100;
+
+            bubbleData.forEach((data, i) => {
+                // Size based on progress (higher progress = larger bubble)
+                const size = minSize + ((data.progress / 100) * (maxSize - minSize));
+
+                // Animation delay for staggered effect
+                const delay = (i * 0.1) % 2;
+
+                const bubble = document.createElement('div');
+                bubble.className = `heatmap-bubble ${data.category}`;
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.setProperty('--delay', `${delay}s`);
+
+                // Inner circle with progress number
+                const inner = document.createElement('div');
+                inner.className = 'bubble-inner';
+                inner.textContent = data.progress + '%';
+
+                // Tooltip
+                const tooltip = document.createElement('div');
+                tooltip.className = 'heatmap-tooltip';
+                const dueDateStr = data.dueDate ? new Date(data.dueDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'No due date';
+                tooltip.innerHTML = `<strong>${data.name}</strong><br>Due: ${dueDateStr}<br>Status: ${data.status}`;
+
+                // Click handler to show details
+                bubble.onclick = function () {
+                    showHeatmapInitiativeDetail(data.id);
+                };
+
+                bubble.appendChild(inner);
+                bubble.appendChild(tooltip);
+                container.appendChild(bubble);
+            });
+
+            // Update legend counts
+            const totalEl = document.getElementById('heatmapTotalUnits');
+            const normalEl = document.getElementById('heatmapNormalCount');
+            const warningEl = document.getElementById('heatmapWarningCount');
+            const criticalEl = document.getElementById('heatmapCriticalCount');
+
+            if (totalEl) totalEl.textContent = initiatives.length;
+            if (normalEl) normalEl.textContent = normalCount;
+            if (warningEl) warningEl.textContent = warningCount;
+            if (criticalEl) criticalEl.textContent = criticalCount;
+
+            // Re-init Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        // --- HEATMAP INITIATIVE DETAIL MODAL ---
+        function showHeatmapInitiativeDetail(initiativeId) {
+            const initiative = initiatives.find(i => i.id === initiativeId);
+            if (!initiative) return;
+
+            const modal = document.getElementById('heatmapInitiativeModal');
+            const content = document.getElementById('heatmapModalContent');
+            if (!modal || !content) return;
+
+            // Status color mapping
+            const statusColors = {
+                'Done': '#00ff9d',
+                'On Going': '#0088ff',
+                'Hold': '#ff8800',
+                'Not Started': '#888888',
+                'Carry Over': '#ffbf00',
+                'Cancelled': '#ff0055'
+            };
+            const statusColor = statusColors[initiative.status] || '#888';
+
+            // Format dates
+            const formatDate = (dateStr) => {
+                if (!dateStr) return '-';
+                return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+            };
+
+            // Build Key Activities HTML
+            let keyActivitiesHTML = '';
+            if (initiative.subInitiatives && initiative.subInitiatives.length > 0) {
+                keyActivitiesHTML = `
+                    <div style="margin-top: 20px;">
+                        <h4 style="color: var(--primary); margin: 0 0 12px 0; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="list-checks" style="width: 16px; height: 16px;"></i>
+                            Key Activities (${initiative.subInitiatives.length})
+                        </h4>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            ${initiative.subInitiatives.map((sub, idx) => {
+                    const subProgress = parseInt(sub.progress) || 0;
+                    const subStatusColor = sub.status === 'Done' ? '#00ff9d' : (subProgress >= 50 ? '#0088ff' : '#ff8800');
+                    return `
+                                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                            <span style="color: white; font-size: 13px; font-weight: 500;">${idx + 1}. ${sub.name || 'Unnamed Activity'}</span>
+                                            <span style="color: ${subStatusColor}; font-size: 12px; font-weight: 600;">${subProgress}%</span>
+                                        </div>
+                                        <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;">
+                                            <div style="height: 100%; width: ${subProgress}%; background: ${subStatusColor}; border-radius: 2px; transition: width 0.3s;"></div>
+                                        </div>
+                                        <div style="display: flex; gap: 15px; margin-top: 8px; font-size: 11px; color: var(--text-muted);">
+                                            <span>Due: ${formatDate(sub.dueDate)}</span>
+                                            <span>Status: ${sub.status || '-'}</span>
+                                        </div>
+                                    </div>
+                                `;
+                }).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                keyActivitiesHTML = `
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 8px; text-align: center;">
+                        <span style="color: var(--text-muted); font-size: 13px;">No Key Activities</span>
+                    </div>
+                `;
+            }
+
+            // Main content HTML
+            content.innerHTML = `
+                <!-- Initiative Name & Status -->
+                <div style="margin-bottom: 20px;">
+                    <h2 style="color: white; font-size: 20px; margin: 0 0 10px 0; line-height: 1.4;">${initiative.name}</h2>
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <span style="background: ${statusColor}22; color: ${statusColor}; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">${initiative.status}</span>
+                        ${initiative.entity ? `<span style="background: rgba(255,255,255,0.1); color: var(--text-muted); padding: 4px 12px; border-radius: 20px; font-size: 12px;">${typeof ENTITIES !== 'undefined' && ENTITIES[initiative.entity] ? ENTITIES[initiative.entity] : initiative.entity}</span>` : ''}
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div style="margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: var(--text-muted); font-size: 13px;">Overall Progress</span>
+                        <span style="color: white; font-weight: 700; font-size: 16px;">${initiative.progress || 0}%</span>
+                    </div>
+                    <div style="height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden;">
+                        <div style="height: 100%; width: ${initiative.progress || 0}%; background: linear-gradient(90deg, ${statusColor}, ${statusColor}aa); border-radius: 5px; transition: width 0.5s;"></div>
+                    </div>
+                </div>
+
+                <!-- Details Grid -->
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px;">
+                    <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);">
+                        <div style="color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Owner</div>
+                        <div style="color: white; font-size: 14px; font-weight: 500;">${initiative.owner || '-'}</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);">
+                        <div style="color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Due Date</div>
+                        <div style="color: white; font-size: 14px; font-weight: 500;">${formatDate(initiative.dueDate)}</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);">
+                        <div style="color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Start Date</div>
+                        <div style="color: white; font-size: 14px; font-weight: 500;">${formatDate(initiative.startDate)}</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);">
+                        <div style="color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Budget</div>
+                        <div style="color: white; font-size: 14px; font-weight: 500;">${initiative.budget ? 'Rp ' + parseInt(initiative.budget).toLocaleString('id-ID') : '-'}</div>
+                    </div>
+                </div>
+
+                ${keyActivitiesHTML}
+
+                <!-- Action Button -->
+                <div style="margin-top: 25px; text-align: center;">
+                    <button onclick="window.location.href='projects.html?id=${initiative.id}'" 
+                        style="background: linear-gradient(135deg, var(--primary), #0088ff); color: black; border: none; padding: 12px 30px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
+                        <i data-lucide="external-link" style="width: 16px; height: 16px; display: inline; vertical-align: middle; margin-right: 8px;"></i>
+                        View Full Details
+                    </button>
+                </div>
+            `;
+
+            // Show modal
+            modal.style.display = 'flex';
+
+            // Re-init Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        function closeHeatmapModal() {
+            const modal = document.getElementById('heatmapInitiativeModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('heatmapInitiativeModal')?.addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeHeatmapModal();
+            }
+        });
 
         // --- STATUS FILTER FUNCTION ---
         function filterByStatus(status) {

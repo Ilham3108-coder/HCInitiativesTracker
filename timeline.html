@@ -295,10 +295,22 @@
                 <i data-lucide="filter" style="width:16px;"></i> Filter:
             </div>
 
-            <select id="filterEntity" class="filter-select" onchange="renderTimeline()" style="max-width: 150px;">
-                <option value="all" style="background: #1a1a2e; color: white;">All Entities</option>
-                <!-- JS Populated -->
+            <!-- Entity Filter Container (Hidden for non-admins) -->
+            <span id="entityFilterContainer" style="display:flex; align-items:center; gap:15px;">
+                <select id="filterEntity" class="filter-select" onchange="renderTimeline()" style="max-width: 150px;">
+                    <option value="all" style="background: #1a1a2e; color: white;">All Entities</option>
+                    <!-- JS Populated -->
+                </select>
+                <div style="width: 1px; background: rgba(255,255,255,0.2); height: 20px;"></div>
+            </span>
+
+            <!-- Type Filter -->
+            <select id="filterType" class="filter-select" onchange="renderTimeline()">
+                <option value="all" style="background: #1a1a2e; color: white;">All Types</option>
+                <option value="initiative" style="background: #1a1a2e; color: white;">Initiatives Only</option>
+                <option value="key_activity" style="background: #1a1a2e; color: white;">Key Activities Only</option>
             </select>
+
             <div style="width: 1px; background: rgba(255,255,255,0.2); height: 20px;"></div>
 
             <!-- Custom Multi-Select Month Dropdown -->
@@ -444,6 +456,12 @@
             toggleAllMonths(allCheck); // This triggers renderTimeline
 
             document.getElementById('filterYear').value = 'all';
+            document.getElementById('filterType').value = 'all';
+
+            // Only reset entity if it exists (admin)
+            const entFilter = document.getElementById('filterEntity');
+            if (entFilter) entFilter.value = 'all';
+
             renderTimeline();
         }
 
@@ -452,12 +470,9 @@
 
         // Hide entity filter for regular users
         if (!userInfo.isAdmin) {
-            const entityFilter = document.getElementById('filterEntity');
-            if (entityFilter) {
-                entityFilter.closest('div').style.display = 'none';
-                // Hide the divider after entity select
-                const dividers = document.querySelectorAll('.filter-bar div[style*="width: 1px"]');
-                if (dividers[0]) dividers[0].style.display = 'none';
+            const entityContainer = document.getElementById('entityFilterContainer');
+            if (entityContainer) {
+                entityContainer.style.display = 'none';
             }
         }
 
@@ -741,7 +756,14 @@
 
                 const yMatch = yearFilter === 'all' || d.getFullYear() === parseInt(yearFilter);
                 const eMatch = entityFilter === 'all' || item.entity === entityFilter;
-                return mMatch && yMatch && eMatch;
+
+                // Type Filter
+                const typeFilter = document.getElementById('filterType').value;
+                const tMatch = typeFilter === 'all' ||
+                    (typeFilter === 'initiative' && item.type === 'Initiative') ||
+                    (typeFilter === 'key_activity' && item.type === 'Key Activity');
+
+                return mMatch && yMatch && eMatch && tMatch;
             });
 
             // Sort

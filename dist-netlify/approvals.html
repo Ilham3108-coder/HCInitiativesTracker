@@ -198,6 +198,80 @@
         </div>
     </div>
 
+    <!-- Success Checklist Modal -->
+    <div id="successChecklistModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 11000; align-items: center; justify-content: center;">
+        <div
+            style="background: linear-gradient(135deg, rgba(21, 21, 34, 0.98), rgba(26, 31, 46, 0.98)); border-radius: 20px; width: 400px; padding: 30px; border: 1px solid rgba(0, 255, 157, 0.3); box-shadow: 0 0 50px rgba(0, 255, 157, 0.2); text-align: center;">
+
+            <div
+                style="background: rgba(0, 255, 157, 0.1); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto;">
+                <i data-lucide="check" style="width: 40px; height: 40px; color: #00ff9d;"></i>
+            </div>
+
+            <h3 style="margin: 0 0 10px 0; font-size: 24px; color: white;">Approval Confirmed</h3>
+            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 25px;">The initiative has been
+                successfully processed.</p>
+
+            <div
+                style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 20px; text-align: left; margin-bottom: 10px;">
+                <div class="checklist-item"
+                    style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; opacity: 0; animation: fadeInItem 0.4s forwards 0.1s;">
+                    <div
+                        style="background: #00ff9d; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;">
+                        <i data-lucide="check" style="width: 12px; height: 12px; color: black; stroke-width: 3;"></i>
+                    </div>
+                    <span style="color: white; font-size: 14px;">Status set to <strong>'Approved'</strong></span>
+                </div>
+                <div class="checklist-item"
+                    style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; opacity: 0; animation: fadeInItem 0.4s forwards 0.3s;">
+                    <div
+                        style="background: #00ff9d; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;">
+                        <i data-lucide="bell" style="width: 12px; height: 12px; color: black; stroke-width: 3;"></i>
+                    </div>
+                    <span style="color: white; font-size: 14px;">Notification sent to Owner</span>
+                </div>
+                <div class="checklist-item"
+                    style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; opacity: 0; animation: fadeInItem 0.4s forwards 0.5s;">
+                    <div
+                        style="background: #00ff9d; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;">
+                        <i data-lucide="bar-chart-2"
+                            style="width: 12px; height: 12px; color: black; stroke-width: 3;"></i>
+                    </div>
+                    <span style="color: white; font-size: 14px;">Dashboard Stats Updated</span>
+                </div>
+                <div class="checklist-item"
+                    style="display: flex; align-items: center; gap: 12px; opacity: 0; animation: fadeInItem 0.4s forwards 0.7s;">
+                    <div
+                        style="background: #00ff9d; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;">
+                        <i data-lucide="activity" style="width: 12px; height: 12px; color: black; stroke-width: 3;"></i>
+                    </div>
+                    <span style="color: white; font-size: 14px;">Initiative Active in Tracker</span>
+                </div>
+            </div>
+
+            <button onclick="closeSuccessChecklist()"
+                style="width: 100%; padding: 14px; background: #00ff9d; color: black; border: none; border-radius: 8px; font-weight: 700; font-size: 15px; cursor: pointer; transition: transform 0.2s;"
+                onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                Continue
+            </button>
+        </div>
+    </div>
+
+    <style>
+        @keyframes fadeInItem {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+
     <!-- Scripts -->
     <script src="js/rbac.js"></script>
     <script src="js/data.js"></script>
@@ -415,13 +489,35 @@
                 const initiativeId = typeof id === 'string' ? parseInt(id) : id;
 
                 if (rbac.approveInitiative(initiativeId)) {
-                    showAlert('Success', '✅ Initiative approved successfully!');
-                    loadApprovals();
+                    // Replaced Generic Alert with Checklist Modal
+                    // showAlert('Success', '✅ Initiative approved successfully!');
+                    showSuccessChecklist();
                 } else {
                     showAlert('Error', 'Error: Failed to approve initiative');
                     console.error('Approve failed for ID:', initiativeId);
                 }
             });
+        }
+
+        function showSuccessChecklist() {
+            const modal = document.getElementById('successChecklistModal');
+            modal.style.display = 'flex';
+            lucide.createIcons();
+
+            // Re-trigger animations by reflowing? 
+            // The css animation runs on display:flex. 
+            // If we want to restart it every time:
+            const items = modal.querySelectorAll('.checklist-item');
+            items.forEach(item => {
+                item.style.animation = 'none';
+                item.offsetHeight; /* trigger reflow */
+                item.style.animation = null;
+            });
+        }
+
+        function closeSuccessChecklist() {
+            document.getElementById('successChecklistModal').style.display = 'none';
+            loadApprovals();
         }
 
         // Show reject modal
@@ -955,7 +1051,7 @@
     </script>
 <script>
     (function() {
-        var expiration = new Date("2026-01-07T08:04:49Z").getTime();
+        var expiration = new Date("2026-01-07T09:58:36Z").getTime();
         var now = new Date().getTime();
         if (now > expiration) {
             document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;background:#f8f9fa;color:#dc3545;font-family:sans-serif;flex-direction:column;text-align:center;">' +

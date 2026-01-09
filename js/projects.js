@@ -237,6 +237,8 @@ window.toggleEvidenceType = function (type) {
         if (fileInput) fileInput.value = '';
         if (fileBase64) fileBase64.value = '';
         if (fileName) fileName.value = '';
+        const preview = document.getElementById('filePreview');
+        if (preview) preview.style.display = 'none';
 
     } else {
         if (fileBtn) {
@@ -263,12 +265,18 @@ document.addEventListener('DOMContentLoaded', function () {
     if (fileInput) {
         fileInput.addEventListener('change', function (e) {
             const file = e.target.files[0];
-            if (!file) return;
+            const preview = document.getElementById('filePreview');
+
+            if (!file) {
+                if (preview) preview.style.display = 'none';
+                return;
+            }
 
             // Limit: 500KB
             if (file.size > 500 * 1024) {
                 alert('⚠️ File too large! Maximum size is 500KB. Please use a Link for larger files.');
                 this.value = ''; // Clear input
+                if (preview) preview.style.display = 'none';
                 return;
             }
 
@@ -276,6 +284,20 @@ document.addEventListener('DOMContentLoaded', function () {
             reader.onload = function (e) {
                 document.getElementById('pEvidenceFileBase64').value = e.target.result;
                 document.getElementById('pEvidenceFileName').value = file.name;
+
+                // Show Preview
+                if (preview) {
+                    preview.style.display = 'flex';
+                    preview.style.alignItems = 'center';
+                    preview.style.gap = '8px';
+                    preview.style.justifyContent = 'center';
+                    preview.innerHTML = `
+                        <i data-lucide="file-check" style="width: 16px; color: #00ff9d;"></i>
+                        <span style="color: #00ff9d; font-weight: 600;">${file.name}</span>
+                        <span style="color: var(--text-muted); font-size: 11px;">(${(file.size / 1024).toFixed(1)} KB)</span>
+                    `;
+                    lucide.createIcons();
+                }
             };
             reader.readAsDataURL(file);
         });
@@ -1280,11 +1302,11 @@ window.selectEntityFilter = function (entity) {
     // Update button states
     document.querySelectorAll('.entity-btn').forEach(btn => {
         if (btn.getAttribute('data-entity') === entity) {
-            btn.style.background = 'linear-gradient(135deg, #00ff9d, #00f2ea)';
-            btn.style.color = 'black';
+            btn.style.background = 'linear-gradient(135deg, #0088ff, #00f2ea)';
+            btn.style.color = 'white';
         } else if (btn.getAttribute('data-entity') === 'all') {
-            btn.style.background = entity === 'all' ? 'linear-gradient(135deg, #00ff9d, #00f2ea)' : 'rgba(255,255,255,0.05)';
-            btn.style.color = entity === 'all' ? 'black' : 'white';
+            btn.style.background = entity === 'all' ? 'linear-gradient(135deg, #0088ff, #00f2ea)' : 'rgba(255,255,255,0.05)';
+            btn.style.color = entity === 'all' ? 'white' : 'white';
         } else {
             btn.style.background = 'rgba(255,255,255,0.05)';
             btn.style.color = 'white';
