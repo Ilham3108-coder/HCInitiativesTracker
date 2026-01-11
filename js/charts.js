@@ -1,16 +1,18 @@
 // js/charts.js
 // Shared Chart Rendering Logic module.
 
-// Constants
-const C_DONE = '#00ff9d';
-const C_ONGOING = '#0088ff';
-const C_HOLD = '#ff8800';
-const C_NOT_STARTED = '#888';
-const C_CARRY = '#ffbf00';
-const C_CANCEL = '#ff0055';
+// Constants - Softer, cohesive color palette
+const C_DONE = '#4ade80';      // Soft green
+const C_ONGOING = '#60a5fa';   // Soft blue
+const C_HOLD = '#fb923c';      // Soft orange
+const C_NOT_STARTED = '#94a3b8'; // Slate gray
+const C_CARRY = '#fbbf24';     // Soft amber
+const C_CANCEL = '#f87171';    // Soft red
 
-const C_OWNERS = ['#0088ff', '#00eebb', '#ffbf00', '#ff0055', '#8800ff', '#00ff9d', '#ffaa00', '#00ccff'];
-const C_URGENCY = ['#ff0055', '#ffbf00', '#00ff9d'];
+// Owner colors - cohesive palette with variations
+const C_OWNERS = ['#60a5fa', '#4ade80', '#a78bfa', '#f472b6', '#22d3ee', '#fbbf24', '#fb923c', '#94a3b8'];
+// Urgency colors - High (red), Medium (amber), Low (green)
+const C_URGENCY = ['#f87171', '#fbbf24', '#4ade80'];
 
 // Helper
 function destroyChart(id) {
@@ -139,7 +141,7 @@ function renderKeyRiskChart(initiatives) {
             labels: ['High Risk', 'Medium Risk', 'Low Risk'],
             datasets: [{
                 data: [riskCounts.High, riskCounts.Medium, riskCounts.Low],
-                backgroundColor: ['#ff0055', '#ffbf00', '#00ff9d'],
+                backgroundColor: ['#f87171', '#fbbf24', '#4ade80'],
                 borderWidth: 0
             }]
         },
@@ -200,7 +202,7 @@ function renderKeyActivityDurationChart(initiatives) {
             datasets: [{
                 label: 'Activities Completed',
                 data: Object.values(buckets),
-                backgroundColor: ['#00ff9d', '#00eebb', '#0088ff', '#ff0055'],
+                backgroundColor: ['#4ade80', '#22d3ee', '#60a5fa', '#f87171'],
                 borderRadius: 4
             }]
         },
@@ -258,7 +260,7 @@ function renderSpeedChart(initiatives, owners) {
             datasets: [{
                 label: 'Avg Speed (Days)',
                 data: ownerShortNames.map(() => Math.floor(Math.random() * 20) + 5), // Mock Data
-                backgroundColor: '#00eebb',
+                backgroundColor: '#22d3ee',
                 borderRadius: 4
             }]
         },
@@ -302,8 +304,8 @@ function renderFinancialChart(initiatives, owners) {
         data: {
             labels: ownerShortNames,
             datasets: [
-                { label: 'Anggaran RKAP (Juta)', data: budgetData, backgroundColor: '#00eebb', borderRadius: 4 },
-                { label: 'Realisasi Biaya (Juta)', data: costData, backgroundColor: '#ff0055', borderRadius: 4 }
+                { label: 'Anggaran RKAP (Juta)', data: budgetData, backgroundColor: '#22d3ee', borderRadius: 4 },
+                { label: 'Realisasi Biaya (Juta)', data: costData, backgroundColor: '#f87171', borderRadius: 4 }
             ]
         },
         options: {
@@ -429,8 +431,8 @@ function renderSCurveChart(initiatives) {
         data: {
             labels: labels,
             datasets: [
-                { label: 'Cumulative Budget (Juta)', data: budgetData, borderColor: '#00eebb', backgroundColor: 'rgba(0, 238, 187, 0.1)', fill: true, tension: 0.4 },
-                { label: 'Cumulative Cost (Juta)', data: costData, borderColor: '#ff0055', backgroundColor: 'rgba(255, 0, 85, 0.1)', fill: true, tension: 0.4 }
+                { label: 'Cumulative Budget (Juta)', data: budgetData, borderColor: '#22d3ee', backgroundColor: 'rgba(34, 211, 238, 0.1)', fill: true, tension: 0.4 },
+                { label: 'Cumulative Cost (Juta)', data: costData, borderColor: '#f87171', backgroundColor: 'rgba(248, 113, 113, 0.1)', fill: true, tension: 0.4 }
             ]
         },
         options: {
@@ -471,7 +473,7 @@ function renderAgingChart(initiatives) {
         type: 'bar',
         data: {
             labels: Object.keys(agingData),
-            datasets: [{ label: 'Number of Tasks', data: Object.values(agingData), backgroundColor: ['#00ff9d', '#00eebb', '#ffbf00', '#ff0055'], borderRadius: 4 }]
+            datasets: [{ label: 'Number of Tasks', data: Object.values(agingData), backgroundColor: ['#4ade80', '#22d3ee', '#fbbf24', '#f87171'], borderRadius: 4 }]
         },
         options: {
             responsive: true, maintainAspectRatio: false,
@@ -507,8 +509,8 @@ function renderVelocityChart(initiatives) {
         data: {
             labels: months,
             datasets: [
-                { label: 'Planned', data: counts, backgroundColor: '#00eebb', borderRadius: 4 },
-                { label: 'Completed', data: doneCounts, backgroundColor: '#00ff9d', borderRadius: 4 }
+                { label: 'Planned', data: counts, backgroundColor: '#22d3ee', borderRadius: 4 },
+                { label: 'Completed', data: doneCounts, backgroundColor: '#4ade80', borderRadius: 4 }
             ]
         },
         options: {
@@ -539,11 +541,11 @@ function renderProgressTrendChart(initiatives) {
             datasets: [{
                 label: 'Overall Progress (%)',
                 data: trendData,
-                borderColor: '#00eebb',
-                backgroundColor: 'rgba(0, 238, 187, 0.1)',
+                borderColor: '#22d3ee',
+                backgroundColor: 'rgba(34, 211, 238, 0.1)',
                 fill: true,
                 tension: 0.4,
-                pointBackgroundColor: '#00eebb'
+                pointBackgroundColor: '#22d3ee'
             }]
         },
         options: {
@@ -596,7 +598,7 @@ function renderSidebarStats(initiatives) {
         <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); margin-top: auto;">
             <div style="font-size: 11px; color: #a0a0b0; margin-bottom: 8px; text-transform: uppercase; font-weight: 600;">Completion Rate</div>
             <div style="height: 6px; background: rgba(0,0,0,0.3); border-radius: 3px; overflow: hidden; margin-bottom: 8px;">
-                <div style="height: 100%; width: ${percent}%; background: #00ff9d; transition: width 0.5s ease;"></div>
+                <div style="height: 100%; width: ${percent}%; background: #4ade80; transition: width 0.5s ease;"></div>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: white;">
                 <span style="font-weight: bold;">${percent}%</span>
@@ -663,7 +665,7 @@ function renderKeyActivityTimelineChart(initiatives) {
             labels: ['Completed', 'On Schedule', 'Overdue'],
             datasets: [{
                 data: [counts.completed, counts.onSchedule, counts.overdue],
-                backgroundColor: ['#00ff9d', '#0088ff', '#ff0055'], // Green, Blue, Red
+                backgroundColor: ['#4ade80', '#60a5fa', '#f87171'], // Soft Green, Blue, Red
                 borderWidth: 0
             }]
         },
@@ -786,9 +788,9 @@ function renderKeyActivityTimelineByOwnerChart(initiatives, owners) {
         data: {
             labels: ownerShortNames,
             datasets: [
-                { label: 'Completed', data: dataCompleted, backgroundColor: '#00ff9d', borderRadius: 4, stack: 'Stack 0' },
-                { label: 'On Schedule', data: dataOnSchedule, backgroundColor: '#0088ff', borderRadius: 4, stack: 'Stack 0' },
-                { label: 'Overdue', data: dataOverdue, backgroundColor: '#ff0055', borderRadius: 4, stack: 'Stack 0' }
+                { label: 'Completed', data: dataCompleted, backgroundColor: '#4ade80', borderRadius: 4, stack: 'Stack 0' },
+                { label: 'On Schedule', data: dataOnSchedule, backgroundColor: '#60a5fa', borderRadius: 4, stack: 'Stack 0' },
+                { label: 'Overdue', data: dataOverdue, backgroundColor: '#f87171', borderRadius: 4, stack: 'Stack 0' }
             ]
         },
         options: {
