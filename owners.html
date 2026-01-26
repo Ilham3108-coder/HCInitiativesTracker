@@ -490,10 +490,17 @@
         // Use global 'initiatives' variable from projects.js
         // const allInitiatives = initiatives; 
 
-        // Stats Helper
+        // Helper to Normalize Owner Name
+        function cleanOwnerName(name) {
+            if (!name) return '';
+            return name.replace('Sub Divisi ', '').trim();
+        }
+
+        // Stats Helper (Updated with Normalization)
         function getStatsForOwner(ownerName) {
+            const cleanTarget = cleanOwnerName(ownerName);
             // Use global 'initiatives'
-            const ownerProjects = initiatives.filter(i => i.owner === ownerName);
+            const ownerProjects = initiatives.filter(i => cleanOwnerName(i.owner) === cleanTarget);
             let done = 0;
             let ongoing = 0;
 
@@ -562,29 +569,35 @@
             let allOwners = new Set();
 
             entityIds.forEach(entityId => {
-                // Get unique owners for this entity
-                const entityInitiatives = initiatives.filter(i => (i.entity || 'ptpn3') === entityId);
-                const uniqueOwners = [...new Set(entityInitiatives.map(i => i.owner).filter(o => o && o.trim() !== ''))];
+                // 1. Official Owners
+                let official = [];
+                if (typeof OWNERS_BY_ENTITY !== 'undefined' && OWNERS_BY_ENTITY[entityId]) {
+                    official = OWNERS_BY_ENTITY[entityId].map(o => cleanOwnerName(o));
+                }
 
-                // Also include custom owners from localStorage
-                let customOwners = [];
+                // 2. Owners from Initiatives
+                const entityInitiatives = initiatives.filter(i => (i.entity || 'ptpn3') === entityId);
+                const uniqueData = [...new Set(entityInitiatives.map(i => cleanOwnerName(i.owner)).filter(o => o !== ''))];
+
+                // 3. Custom Owners
+                let custom = [];
                 try {
                     const stored = localStorage.getItem('custom_owners');
                     if (stored) {
                         const allCustom = JSON.parse(stored);
-                        customOwners = allCustom[entityId] || [];
+                        custom = (allCustom[entityId] || []).map(o => cleanOwnerName(o));
                     }
                 } catch (e) { }
 
                 // Merge unique owners
-                const mergedOwners = [...new Set([...uniqueOwners, ...customOwners])];
+                const mergedOwners = [...new Set([...official, ...uniqueData, ...custom])];
 
                 // Filter out deleted owners
                 let deletedOwners = [];
                 try {
                     const storedDeleted = localStorage.getItem('deleted_owners');
                     if (storedDeleted) {
-                        deletedOwners = JSON.parse(storedDeleted);
+                        deletedOwners = JSON.parse(storedDeleted).map(o => cleanOwnerName(o));
                     }
                 } catch (e) { }
                 const filteredOwners = mergedOwners.filter(o => !deletedOwners.includes(o));
@@ -592,7 +605,7 @@
                 const countEl = document.getElementById(`${entityId}-count`);
                 if (countEl) countEl.textContent = filteredOwners.length;
 
-                // Add to all owners set
+                // Add to Global Count (All Entities)
                 filteredOwners.forEach(o => allOwners.add(o));
             });
 
@@ -611,21 +624,53 @@
             // Update Active State
             document.querySelectorAll('.entity-btn').forEach(b => b.classList.remove('active'));
             if (btnElement) btnElement.classList.add('active');
+            else {
+                // Try to highlight sidebar if matched
+                const btn = document.querySelector(`.entity-btn[data-entity="${entityId}"]`);
+                if (btn) btn.classList.add('active');
+            }
 
             // Update entity counts
             updateEntityCounts();
 
             // Handle "All Entities" selection
             if (entityId === 'all') {
-                // Get all unique owners from all initiatives
-                let allOwners = [...new Set(initiatives.map(i => i.owner).filter(o => o && o.trim() !== ''))].sort();
+                // 1. Get ALL Official Owners from ALL Entities
+                let allOfficial = [];
+                if (typeof OWNERS_BY_ENTITY !== 'undefined') {
+                    Object.values(OWNERS_BY_ENTITY).forEach(list => {
+                        if (Array.isArray(list)) {
+                            allOfficial.push(...list.map(o => cleanOwnerName(o)));
+                        }
+                    });
+                }
 
-                // Filter out deleted owners
+                // 2. Get Owners from Initiatives
+                const ownersFromData = initiatives.map(i => cleanOwnerName(i.owner)).filter(o => o !== '');
+
+                // 3. Get Custom Owners from LocalStorage
+                let customOwners = [];
+                try {
+                    const stored = localStorage.getItem('custom_owners');
+                    if (stored) {
+                        const allCustom = JSON.parse(stored);
+                        Object.values(allCustom).forEach(list => {
+                            if (Array.isArray(list)) {
+                                customOwners.push(...list.map(o => cleanOwnerName(o)));
+                            }
+                        });
+                    }
+                } catch (e) { }
+
+                // 4. Merge & Unique
+                let allOwners = [...new Set([...allOfficial, ...ownersFromData, ...customOwners])].sort();
+
+                // 5. Filter out deleted
                 let deletedOwners = [];
                 try {
                     const storedDeleted = localStorage.getItem('deleted_owners');
                     if (storedDeleted) {
-                        deletedOwners = JSON.parse(storedDeleted);
+                        deletedOwners = JSON.parse(storedDeleted).map(o => cleanOwnerName(o));
                     }
                 } catch (e) { }
                 allOwners = allOwners.filter(o => !deletedOwners.includes(o));
@@ -634,16 +679,16 @@
                 return;
             }
 
-            // --- INTEGRATION LOGIC START ---
+            // --- INTEGRATION LOGIC START (Normalized) ---
             // 1. Get official owner list from data.js
-            let officialowners = OWNERS_BY_ENTITY[entityId] || [];
+            let officialowners = (OWNERS_BY_ENTITY[entityId] || []).map(o => cleanOwnerName(o));
 
             // 2. Fallback: Get unique owners from existing initiatives
             const entityInitiatives = initiatives.filter(i => (i.entity || userInfo.entity || 'ptpn1') === entityId);
             const ownersFromData = [...new Set(
                 entityInitiatives
-                    .map(i => i.owner)
-                    .filter(o => o && o.trim() !== "")
+                    .map(i => cleanOwnerName(i.owner))
+                    .filter(o => o !== "")
             )];
 
             // 3. Get Custom Owners from LocalStorage
@@ -652,13 +697,13 @@
                 const stored = localStorage.getItem('custom_owners');
                 if (stored) {
                     const allCustom = JSON.parse(stored); // Structure: { 'ptpn3': ['Name'], 'ptpn1': [] }
-                    customOwners = allCustom[entityId] || [];
+                    customOwners = (allCustom[entityId] || []).map(o => cleanOwnerName(o));
                 }
             } catch (e) {
                 console.error("Error loading custom owners", e);
             }
 
-            // 4. Merge lists (Unique)
+            // 4. Merge lists (Unique & Clean)
             let finalOwnerList = [...new Set([...officialowners, ...ownersFromData, ...customOwners])].sort();
 
             // 5. Filter out deleted owners from blacklist
@@ -666,7 +711,7 @@
             try {
                 const storedDeleted = localStorage.getItem('deleted_owners');
                 if (storedDeleted) {
-                    deletedOwners = JSON.parse(storedDeleted);
+                    deletedOwners = JSON.parse(storedDeleted).map(o => cleanOwnerName(o));
                 }
             } catch (e) { }
 
@@ -691,33 +736,40 @@
                 return;
             }
 
-            ownerList.forEach(owner => {
-                const stats = getStatsForOwner(owner); // Calculates from initiatives
+            ownerList.forEach(cleanName => {
+                const stats = getStatsForOwner(cleanName);
                 const card = document.createElement('div');
                 card.className = 'owner-card';
                 card.style.cursor = 'pointer';
 
-                // --- FIXED LINK: Use 'owner' param to match projects.js filtering ---
+                // --- RESOLVE DISPLAY NAME ---
+                // Prefer official name (with "Sub Divisi") if available
+                let displayName = cleanName;
+                const officialList = OWNERS_BY_ENTITY[currentSelectedEntity] || [];
+                const officialMatch = officialList.find(o => cleanOwnerName(o) === cleanName);
+                if (officialMatch) displayName = officialMatch;
+
+                // --- LINK LOGIC ---
+                // We link to the CLEAN name because that likely matches the data in initiatives
+                // (e.g. data has "Pengembangan Organisasi")
                 card.onclick = () => {
-                    // Use encodeURIComponent to handle spaces/special chars safely
-                    window.location.href = `projects.html?entity=${currentSelectedEntity}&owner=${encodeURIComponent(owner)}`;
+                    window.location.href = `projects.html?entity=${currentSelectedEntity}&owner=${encodeURIComponent(cleanName)}`;
                 };
 
-                // Calculate statistics
-                const ownerInitiatives = initiatives.filter(i => i.owner === owner);
+                // Re-calc specific stats for display (using normalized match)
+                const ownerInitiatives = initiatives.filter(i => cleanOwnerName(i.owner) === cleanName);
                 const totalInitiatives = ownerInitiatives.length;
                 const totalKeyActivities = ownerInitiatives.reduce((sum, init) => sum + (init.subInitiatives ? init.subInitiatives.length : 0), 0);
 
-                // Calculate average progress
                 const avgProgress = totalInitiatives > 0
                     ? Math.round(ownerInitiatives.reduce((sum, init) => sum + (init.progress || 0), 0) / totalInitiatives)
                     : 0;
 
                 card.innerHTML = `
                     <div style="display:flex; justify-content:space-between; align-items:start;">
-                        <div class="owner-name">${owner.replace('Sub Divisi ', '')}</div>
+                        <div class="owner-name">${displayName}</div>
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <i data-lucide="trash-2" onclick="event.stopPropagation(); confirmDeleteOwner('${owner.replace(/'/g, "\\'")}')" style="color: #f87171; width: 16px; height: 16px; cursor: pointer; opacity: 0.6; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" title="Hapus Owner"></i>
+                            <i data-lucide="trash-2" onclick="event.stopPropagation(); confirmDeleteOwner('${cleanName.replace(/'/g, "\\'")}')" style="color: #f87171; width: 16px; height: 16px; cursor: pointer; opacity: 0.6; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" title="Hapus Owner"></i>
                         </div>
                     </div>
                     
@@ -798,6 +850,8 @@
 
             modal.style.display = 'flex';
         }
+
+
 
         function closeOwnerModal() {
             document.getElementById('ownerModal').style.display = 'none';

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Overview - HC Project Tracker</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/intro.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -5704,45 +5705,99 @@
 
 
     <!-- Cloud Connection Modal -->
+    <style>
+        @keyframes spin-loader {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
     <div id="cloudDBModal" class="modal-overlay"
-        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 10001; align-items: center; justify-content: center;">
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 10001; align-items: center; justify-content: center;">
         <div class="modal-content"
-            style="background: rgba(21, 21, 34, 0.95); width: 450px; border: 1px solid rgba(255, 255, 255, 0.1);">
-            <div class="modal-header">
+            style="background: #151522; width: 480px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.5); overflow: hidden; position: relative;">
+
+            <!-- Header -->
+            <div class="modal-header"
+                style="padding: 20px 25px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.02);">
                 <div
-                    style="font-size: 18px; font-weight: 700; color: white; display: flex; align-items: center; gap: 10px;">
-                    <i data-lucide="cloud" style="color: #60a5fa;"></i>
-                    Cloud Database Connection
+                    style="font-size: 16px; font-weight: 700; color: white; display: flex; align-items: center; gap: 10px;">
+                    <div
+                        style="width: 32px; height: 32px; background: rgba(96, 165, 250, 0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i data-lucide="cloud" style="width: 18px; height: 18px; color: #60a5fa;"></i>
+                    </div>
+                    Cloud Connection
                 </div>
-                <button class="modal-close" onclick="document.getElementById('cloudDBModal').style.display='none'">
-                    <i data-lucide="x"></i>
+                <button onclick="closeCloudModal()"
+                    style="background: transparent; border: none; color: rgba(255,255,255,0.4); cursor: pointer; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s;"
+                    onmouseover="this.style.color='white'; this.style.background='rgba(255,255,255,0.1)'"
+                    onmouseout="this.style.color='rgba(255,255,255,0.4)'; this.style.background='transparent'">
+                    <i data-lucide="x" style="width: 18px; height: 18px;"></i>
                 </button>
             </div>
-            <div style="padding: 20px;">
-                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">
-                    Hubungkan dashboard ke Supabase untuk menyimpan data di cloud.
+
+            <!-- Body -->
+            <div style="padding: 25px;">
+                <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 25px; line-height: 1.6;">
+                    Hubungkan dashboard ke Supabase untuk sinkronisasi real-time dan backup data di cloud.
                 </p>
 
                 <div style="margin-bottom: 15px;">
-                    <label style="display: block; color: white; font-size: 12px; margin-bottom: 5px;">Project
+                    <label
+                        style="display: block; color: #94a3b8; font-size: 11px; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">Project
                         URL</label>
-                    <input type="text" id="inputSupabaseUrl" placeholder="https://xyz.supabase.co"
-                        style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 10px; border-radius: 6px;">
+                    <div style="position: relative;">
+                        <i data-lucide="link"
+                            style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: rgba(255,255,255,0.3);"></i>
+                        <input type="text" id="inputSupabaseUrl" placeholder="https://xyz.supabase.co"
+                            style="width: 100%; background: #0f111a; border: 1px solid rgba(255,255,255,0.1); color: white; padding: 12px 12px 12px 35px; border-radius: 8px; font-size: 13px; transition: border-color 0.2s;"
+                            onfocus="this.style.borderColor='#60a5fa'"
+                            onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+                    </div>
                 </div>
 
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; color: white; font-size: 12px; margin-bottom: 5px;">Anon Public
-                        Key</label>
-                    <input type="password" id="inputSupabaseKey" placeholder="eyJ..."
-                        style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 10px; border-radius: 6px;">
+                <div style="margin-bottom: 25px;">
+                    <label
+                        style="display: block; color: #94a3b8; font-size: 11px; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">Anon
+                        Public Key</label>
+                    <div style="position: relative;">
+                        <i data-lucide="key"
+                            style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: rgba(255,255,255,0.3);"></i>
+                        <input type="password" id="inputSupabaseKey" placeholder="eyJ..."
+                            style="width: 100%; background: #0f111a; border: 1px solid rgba(255,255,255,0.1); color: white; padding: 12px 12px 12px 35px; border-radius: 8px; font-size: 13px; transition: border-color 0.2s;"
+                            onfocus="this.style.borderColor='#60a5fa'"
+                            onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+                    </div>
                 </div>
 
-                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <div style="display: flex; gap: 12px; justify-content: flex-end; padding-top: 10px;">
                     <button onclick="disconnectCloudDB()"
-                        style="padding: 8px 15px; background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px; cursor: pointer;">Disconnect</button>
-                    <button onclick="saveCloudConfig()"
-                        style="padding: 8px 15px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;">Connect
-                        & Sync</button>
+                        style="padding: 10px 18px; background: rgba(239, 68, 68, 0.1); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s;"
+                        onmouseover="this.style.background='rgba(239, 68, 68, 0.2)'"
+                        onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'">
+                        Disconnect
+                    </button>
+                    <button id="btnConnectSync" onclick="saveCloudConfig()"
+                        style="padding: 10px 20px; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); transition: all 0.2s;"
+                        onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 15px rgba(59, 130, 246, 0.4)'"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(59, 130, 246, 0.3)'">
+                        <i data-lucide="refresh-cw" width="14" height="14"></i>
+                        Connect & Sync
+                    </button>
+                </div>
+            </div>
+
+            <!-- Success Overlay -->
+            <div id="cloudSuccessOverlay"
+                style="display: none; position: absolute; inset: 0; background: rgba(21, 21, 34, 0.98); z-index: 10; flex-direction: column; align-items: center; justify-content: center; gap: 15px; opacity: 0; transition: opacity 0.5s;">
+                <div
+                    style="width: 70px; height: 70px; border-radius: 50%; background: rgba(34, 197, 94, 0.2); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(34, 197, 94, 0.2);">
+                    <i data-lucide="check" style="width: 35px; height: 35px; color: #4ade80;"></i>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 20px; font-weight: 700; color: white; margin-bottom: 5px;">Connection
+                        Successful!</div>
+                    <div style="font-size: 14px; color: var(--text-muted);">Synchronizing data with Cloud...</div>
                 </div>
             </div>
         </div>
@@ -5751,23 +5806,58 @@
     <!-- Scripts (Removed Duplicates) -->
 
     <script>
+        function closeCloudModal() {
+            document.getElementById('cloudDBModal').style.display = 'none';
+        }
+
         // Cloud Modal Logic
         function showCloudModal() {
             document.getElementById('cloudDBModal').style.display = 'flex';
+            document.getElementById('cloudSuccessOverlay').style.display = 'none'; // Reset
+            document.getElementById('cloudSuccessOverlay').style.opacity = '0';
+
             // Pre-fill
             const url = localStorage.getItem('supabase_url');
             const key = localStorage.getItem('supabase_key');
             if (url) document.getElementById('inputSupabaseUrl').value = url;
             if (key) document.getElementById('inputSupabaseKey').value = key;
+
+            // Trigger Icons
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         function saveCloudConfig() {
             const url = document.getElementById('inputSupabaseUrl').value.trim();
             const key = document.getElementById('inputSupabaseKey').value.trim();
+            const btn = document.getElementById('btnConnectSync');
 
             if (url && key) {
-                window.dataService.configureCloud(url, key);
-                alert('Cloud connected! Page will reload to sync.');
+                // Loading State
+                const originalText = btn.innerHTML;
+                btn.innerHTML = `<i data-lucide="loader-2" style="animation: spin-loader 1s linear infinite; width:16px; height:16px;"></i> Connecting...`;
+                btn.style.opacity = '0.7';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+
+                // Simulate & Save
+                setTimeout(() => {
+                    // Save Config Manually
+                    localStorage.setItem('supabase_url', url);
+                    localStorage.setItem('supabase_key', key);
+
+                    // Show Success Overlay
+                    const overlay = document.getElementById('cloudSuccessOverlay');
+                    overlay.style.display = 'flex';
+                    // Small delay to allow display flex to apply before opacity transition
+                    setTimeout(() => { overlay.style.opacity = '1'; }, 50);
+
+                    if (window.lucide) window.lucide.createIcons();
+
+                    // Reload after delay
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                }, 1000);
+
             } else {
                 alert('Please enter both URL and Key');
             }
@@ -5805,6 +5895,121 @@
                 document.getElementById('btnRestoreData').style.display = 'block';
             }
         }, 1500);
+    </script>
+    <!-- Intro Motion Overlay -->
+    <div id="introOverlay">
+        <!-- Removed 'muted' to allow sound -->
+        <video id="introVideo" playsinline>
+            <source src="assets/intro.mp4" type="video/mp4">
+        </video>
+        <div id="introFallback">
+            <div class="loader-pulse"></div>
+            <div>SYSTEM INITIALIZING...</div>
+        </div>
+        <button onclick="skipIntro()" class="skip-btn">SKIP ENTRO</button>
+
+        <!-- Mute/Unmute Toggle Button (Persistent) -->
+        <button id="audioToggleBtn" onclick="toggleAudio()"
+            style="position: absolute; top: 30px; right: 30px; background: rgba(0,0,0,0.5); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 8px; border-radius: 50%; cursor: pointer; z-index: 100001; transition: all 0.3s; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+            <i id="audioIcon" data-lucide="volume-2"></i>
+        </button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Check Session (One-Time Play)
+            const hasPlayed = sessionStorage.getItem('introPlayed');
+            const overlay = document.getElementById('introOverlay');
+
+            if (hasPlayed) {
+                overlay.style.display = 'none';
+                return;
+            }
+
+            const video = document.getElementById('introVideo');
+            const fallback = document.getElementById('introFallback');
+            const audioBtn = document.getElementById('audioToggleBtn');
+            const audioIcon = document.getElementById('audioIcon');
+
+            // Attempt Play WITH SOUND
+            const playPromise = video.play();
+
+            if (playPromise !== undefined) {
+                playPromise.then(_ => {
+                    // Playing with sound
+                    updateAudioIcon(false);
+                }).catch(error => {
+                    // Autoplay blocked -> Mute and play
+                    console.warn('Autoplay blocked. Muting.', error);
+                    video.muted = true;
+                    video.play();
+                    updateAudioIcon(true);
+                });
+            }
+
+            // Sync icon on volume change (if system changes it)
+            video.onvolumechange = function () {
+                updateAudioIcon(video.muted);
+            }
+
+            window.toggleAudio = function () {
+                video.muted = !video.muted;
+                // Icon updates via onvolumechange
+            }
+
+            function updateAudioIcon(isMuted) {
+                if (isMuted) {
+                    audioIcon.setAttribute('data-lucide', 'volume-x');
+                    audioBtn.style.color = '#ff6b6b';
+                    audioBtn.style.borderColor = '#ff6b6b';
+                } else {
+                    audioIcon.setAttribute('data-lucide', 'volume-2');
+                    audioBtn.style.color = '#00f2ea';
+                    audioBtn.style.borderColor = '#00f2ea';
+                }
+                lucide.createIcons();
+            }
+
+            video.onended = function () {
+                fadeOutIntro();
+            };
+
+            video.onerror = function () {
+                handleVideoError();
+            };
+
+            function handleVideoError() {
+                video.style.display = 'none';
+                fallback.style.display = 'flex';
+                if (audioBtn) audioBtn.style.display = 'none';
+                setTimeout(fadeOutIntro, 3500);
+            }
+        });
+
+        function fadeOutIntro() {
+            const overlay = document.getElementById('introOverlay');
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                sessionStorage.setItem('introPlayed', 'true');
+            }, 1000);
+        }
+
+        function skipIntro() {
+            fadeOutIntro();
+        }
+    </script>
+    <script>
+        // Ensure Dashboard Renders if Offline
+        document.addEventListener('DOMContentLoaded', () => {
+            // If DataService exists but NOT connected, we must trigger render manually
+            if (window.dataService && !window.dataService.supabase.isConnected()) {
+                console.log('🔌 Offline Mode: Triggering Initial Render via Event...');
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('initiatives-updated'));
+                }, 500);
+            }
+        });
     </script>
 </body>
 

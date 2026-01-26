@@ -938,42 +938,62 @@ window.saveDataToCloud = function (item) {
 };
 
 window.submitEvidence = function () {
-    // Capture Evidence
-    const evidenceLink = document.getElementById('pEvidenceLink')?.value || '';
-    const evidenceFileBase64 = document.getElementById('pEvidenceFileBase64')?.value || '';
-    const evidenceFileName = document.getElementById('pEvidenceFileName')?.value || '';
+    console.log('🚀 submitEvidence called');
+    try {
+        // Capture Evidence Safely
+        const evidenceLinkEl = document.getElementById('pEvidenceLink');
+        const evidenceFileBase64El = document.getElementById('pEvidenceFileBase64');
+        const evidenceFileNameEl = document.getElementById('pEvidenceFileName');
 
-    let evidence = null;
-    if (evidenceFileBase64) {
-        evidence = {
-            type: 'file',
-            name: evidenceFileName,
-            content: evidenceFileBase64,
-            timestamp: new Date().toISOString()
-        };
-    } else if (evidenceLink) {
-        evidence = {
-            type: 'link',
-            url: evidenceLink,
-            timestamp: new Date().toISOString()
-        };
-    }
+        const evidenceLink = evidenceLinkEl ? evidenceLinkEl.value : '';
+        const evidenceFileBase64 = evidenceFileBase64El ? evidenceFileBase64El.value : '';
+        const evidenceFileName = evidenceFileNameEl ? evidenceFileNameEl.value : '';
 
-    // Retrieve Temp Data
-    const data = window.tempProjectData;
-    if (!data) return; // Should not happen
+        console.log('Evidence Input:', { link: !!evidenceLink, file: !!evidenceFileBase64 });
 
-    let project;
-    const currentUsername = data.createdBy || localStorage.getItem('currentUser');
+        let evidence = null;
+        if (evidenceFileBase64) {
+            evidence = {
+                type: 'file',
+                name: evidenceFileName,
+                content: evidenceFileBase64,
+                timestamp: new Date().toISOString()
+            };
+        } else if (evidenceLink) {
+            evidence = {
+                type: 'link',
+                url: evidenceLink,
+                timestamp: new Date().toISOString()
+            };
+        }
 
-    if (data.id && !data.isNew) {
-        // Update Existing
-        project = allInitiatives.find(i => i.id == data.id);
-        if (project) {
+        // Retrieve Temp Data
+        const data = window.tempProjectData;
+        if (!data) {
+            console.error('❌ tempProjectData is missing!');
+            alert('System Error: Session data lost. Please try again.');
+            return;
+        }
+
+        console.log('Temp Data found:', data);
+        const currentUsername = data.createdBy || localStorage.getItem('currentUser') || 'guest';
+
+        if (data.id && !data.isNew) {
+            // --- UPDATE EXISTING ---
+            // Loose matching for ID (String vs Int)
+            const project = allInitiatives.find(i => i.id == data.id);
+            if (!project) {
+                console.error('❌ Project not found in allInitiatives ID:', data.id);
+                alert('Error: Project not found. It might have been deleted.');
+                return;
+            }
+
+            console.log('Found Project:', project.name);
             const isUser = window.rbac && window.rbac.isUser();
-            console.log('submitEvidence: Updating existing. Is User:', isUser);
+
             if (isUser) {
                 // USER: Create Pending Update
+                console.log('Processing as USER (Pending Update)');
                 project.pendingUpdate = {
                     name: data.name,
                     owner: data.owner,
@@ -985,16 +1005,14 @@ window.submitEvidence = function () {
                     cost: data.cost,
                     subInitiatives: data.subInitiatives,
                     indicators: data.indicators,
-                    evidence: evidence, // Add Evidence
+                    evidence: evidence,
                     updatedBy: currentUsername,
                     updatedAt: new Date().toISOString()
                 };
 
-                // Logic for proposed progress...
+                // Recalc logic for pending...
                 let proposedProgress = 0;
-                if (data.subInitiatives.length > 0) {
-                    // ... same calculation logic ...
-                    // actually, let's copy the robust calc:
+                if (data.subInitiatives && data.subInitiatives.length > 0) {
                     let weightedSum = 0;
                     let totalW = 0;
                     data.subInitiatives.forEach(s => {
@@ -1015,19 +1033,20 @@ window.submitEvidence = function () {
 
                 project.approvalStatus = 'pending_update';
 
-                // Notification
+                // Notifications
                 if (window.addNotification) {
                     window.addNotification('info', `Update request sent for: "${data.name}"`, currentUsername);
                     window.addNotification('warning', `Update request from ${currentUsername}`, 'admin');
                 }
 
-                // Success Popup (Checklist Style)
-                document.getElementById('evidenceModal').style.display = 'none';
+                // Close & Success
+                const evModal = document.getElementById('evidenceModal');
+                if (evModal) evModal.style.display = 'none';
 
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         title: 'Initiative Submitted!',
-                        text: 'Your initiative and evidence have been uploaded successfully and are waiting for Administrator review.',
+                        text: 'Your update request has been sent for review.',
                         icon: 'success',
                         background: '#1a1a2e',
                         color: 'white',
@@ -1038,7 +1057,7 @@ window.submitEvidence = function () {
                         renderProjects();
                     });
                 } else {
-                    alert('Initiative Submitted! Your initiative and evidence have been uploaded successfully and are waiting for Administrator review.');
+                    alert('Initiative Submitted! Update request sent.');
                     window.saveDataToCloud(project);
                     window.tempProjectData = null;
                     renderProjects();
@@ -1046,6 +1065,7 @@ window.submitEvidence = function () {
 
             } else {
                 // ADMIN: Update Directly
+                console.log('Processing as ADMIN (Direct Update)');
                 project.name = data.name;
                 project.owner = data.owner;
                 project.output = data.output;
@@ -1056,9 +1076,11 @@ window.submitEvidence = function () {
                 project.cost = data.cost;
                 project.subInitiatives = data.subInitiatives;
                 project.indicators = data.indicators;
+                // Update Evidence only if new evidence provided, otherwise keep old? 
+                // Usually overwrite if specific action, but here we assume user wants to attach.
                 if (evidence) project.evidence = evidence;
 
-                if (data.subInitiatives.length > 0) {
+                if (data.subInitiatives && data.subInitiatives.length > 0) {
                     recalculateProgress(project.id);
                 } else {
                     project.progress = data.progress;
@@ -1068,8 +1090,8 @@ window.submitEvidence = function () {
                     window.addNotification('info', `Updated initiative: "${data.name}"`, currentUsername);
                 }
 
-                // Success Popup
-                document.getElementById('evidenceModal').style.display = 'none';
+                const evModal = document.getElementById('evidenceModal');
+                if (evModal) evModal.style.display = 'none';
 
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
@@ -1085,96 +1107,102 @@ window.submitEvidence = function () {
                         renderProjects();
                     });
                 } else {
-                    alert('Success! Initiative updated with evidence successfully.');
+                    alert('Success! Initiative updated.');
                     window.saveDataToCloud(project);
                     window.tempProjectData = null;
                     renderProjects();
                 }
             }
-        }
-    } else {
-        // Create New
-        const isUser = window.rbac && window.rbac.isUser();
-        const approvalStatus = isUser ? 'pending' : 'approved';
-        console.log('submitEvidence: Creating new. Is User:', isUser, 'Status:', approvalStatus);
 
-        const newProject = {
-            id: Date.now(),
-            name: data.name,
-            owner: data.owner,
-            output: data.output,
-            entity: data.entity,
-            dueDate: data.dueDate,
-            urgency: data.urgency,
-            budget: data.budget,
-            cost: data.cost,
-            status: data.status,
-            progress: data.subInitiatives.length > 0 ? 0 : data.progress,
-            subInitiatives: data.subInitiatives,
-            indicators: data.indicators,
-            evidence: evidence,
-            createdBy: currentUsername,
-            approvalStatus: approvalStatus
-        };
+        } else {
+            // --- CREATE NEW ---
+            console.log('Creating NEW Initiative');
+            const isUser = window.rbac && window.rbac.isUser();
+            const approvalStatus = isUser ? 'pending' : 'approved';
 
-        allInitiatives.push(newProject);
+            const newProject = {
+                id: Date.now(),
+                name: data.name,
+                owner: data.owner,
+                output: data.output,
+                entity: data.entity,
+                dueDate: data.dueDate,
+                urgency: data.urgency,
+                budget: data.budget,
+                cost: data.cost,
+                status: data.status,
+                progress: (data.subInitiatives && data.subInitiatives.length > 0) ? 0 : data.progress,
+                subInitiatives: data.subInitiatives || [],
+                indicators: data.indicators || [],
+                evidence: evidence,
+                createdBy: currentUsername,
+                approvalStatus: approvalStatus
+            };
 
-        if (window.addNotification) {
-            window.addNotification('success', `Created new initiative: "${data.name}"`, currentUsername);
-            if (window.rbac && window.rbac.isUser()) {
-                window.addNotification('warning', `New initiative approval request from ${currentUsername}`, 'admin');
+            // Recalculate initial progress if needed
+            if (newProject.subInitiatives.length > 0) {
+                // Initial progress usually 0, but if user manually set progress in activities?
+                // Standard logic: new items starts at 0 unless manually set.
             }
-        }
 
-        // Success Popup
-        document.getElementById('evidenceModal').style.display = 'none';
+            allInitiatives.push(newProject);
 
-        let msgTitle = 'Initiative Created!';
-        let msgText = 'New initiative has been created successfully.';
+            if (window.addNotification) {
+                window.addNotification('success', `Created new initiative: "${data.name}"`, currentUsername);
+                if (isUser) {
+                    window.addNotification('warning', `New initiative approval form ${currentUsername}`, 'admin');
+                }
+            }
 
-        if (window.rbac && window.rbac.isUser()) {
-            msgText = 'New initiative uploaded successfully! Waiting for Administrator review.';
-        }
+            const evModal = document.getElementById('evidenceModal');
+            if (evModal) evModal.style.display = 'none';
 
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                title: msgTitle,
-                text: msgText,
-                icon: 'success',
-                background: '#1a1a2e',
-                color: 'white',
-                confirmButtonColor: '#0088ff'
-            }).then(() => {
+            let msgTitle = 'Initiative Created!';
+            let msgText = isUser ? 'Waiting for Administrator review.' : 'New initiative created successfully.';
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: msgTitle,
+                    text: msgText,
+                    icon: 'success',
+                    background: '#1a1a2e',
+                    color: 'white',
+                    confirmButtonColor: '#0088ff'
+                }).then(() => {
+                    window.saveDataToCloud(newProject);
+                    window.tempProjectData = null;
+                    renderProjects();
+                });
+            } else {
+                alert(msgTitle + '\n' + msgText);
                 window.saveDataToCloud(newProject);
                 window.tempProjectData = null;
                 renderProjects();
-            });
-        } else {
-            alert(msgTitle + '\n' + msgText);
-            window.saveDataToCloud(newProject);
-            window.tempProjectData = null;
-            renderProjects();
+            }
         }
+
+        // Finalize
+        saveProjectsToLocalStorage();
+        renderProjects();
+        if (typeof updateDashboard === 'function') updateDashboard();
+
+        // Reset forms
+        const form = document.getElementById('projectForm');
+        if (form) form.reset();
+        const subCont = document.getElementById('subInitiativesContainer');
+        if (subCont) subCont.innerHTML = '';
+        const indCont = document.getElementById('indicatorsContainer');
+        if (indCont) indCont.innerHTML = '';
+        const pid = document.getElementById('projectId');
+        if (pid) pid.value = '';
+
+        console.log('✅ submitEvidence process complete');
+
+    } catch (err) {
+        console.error('CRITICAL ERROR in submitEvidence:', err);
+        alert('An error occurred while submitting: ' + err.message);
     }
-
-    // --- FINALIZATION ---
-    saveProjectsToLocalStorage();
-    renderProjects();
-    if (typeof updateDashboard === 'function') updateDashboard();
-
-    // Reset form
-    const form = document.getElementById('projectForm');
-    if (form) form.reset();
-    document.getElementById('subInitiativesContainer').innerHTML = '';
-    const indContainer = document.getElementById('indicatorsContainer');
-    if (indContainer) indContainer.innerHTML = '';
-
-    // Reset ID
-    const pidInfo = document.getElementById('projectId');
-    if (pidInfo) pidInfo.value = '';
-
-    console.log('✅ Project saved/updated successfully via Evidence Flow');
-}; // End submitEvidence
+};
 
 // --- END MODAL LOGIC ---
 
@@ -1685,10 +1713,24 @@ function renderProjects() {
             `;
         }
 
+        // Helper to resolve long name
+        const resolveOwnerDisplay = (name, entity) => {
+            if (!name) return '';
+            // If already has Sub Divisi, assume correct
+            if (name.includes('Sub Divisi')) return name;
+
+            // Try to find match in official list
+            if (typeof OWNERS_BY_ENTITY !== 'undefined' && OWNERS_BY_ENTITY[entity]) {
+                const match = OWNERS_BY_ENTITY[entity].find(o => o.replace('Sub Divisi ', '').trim() === name);
+                if (match) return match;
+            }
+            return name;
+        };
+
         header.innerHTML = `
             <i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" class="chevron-icon"></i>
             <div style="font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${init.name}">${init.name}</div>
-            <div style="font-size: 11px; color: var(--text-muted);">${init.owner.replace('Sub Divisi ', '')}</div>
+            <div style="font-size: 11px; color: var(--text-muted);">${resolveOwnerDisplay(init.owner, init.entity)}</div>
             
             <div style="font-size: 11px; color: #fff;">${formatRupiah(init.budget || 0)}</div>
             <div style="font-size: 11px; color: var(--text-muted);">${formatRupiah(init.cost || 0)}</div>

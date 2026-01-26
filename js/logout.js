@@ -16,6 +16,7 @@ function closeLogoutModal() {
 
 function proceedLogout() {
     localStorage.removeItem('currentUser');
+    sessionStorage.removeItem('introPlayed'); // Reset Intro Video
     window.location.href = 'index.html'; // Redirect to login page
 }
 
