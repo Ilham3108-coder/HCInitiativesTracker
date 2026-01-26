@@ -103,7 +103,7 @@ function saveState() {
     console.log('✅ Data saved to localStorage');
 
     // SYNC TO CLOUD (Auto-Backup)
-    if (window.dataService && window.dataService.supabase) {
+    if (window.dataService && window.dataService.supabase && window.dataService.supabase.isConnected()) {
         console.log('☁️ Initiating Background Cloud Sync...');
         const payload = allInitiatives.map(p => ({
             id: p.id,
@@ -112,11 +112,16 @@ function saveState() {
             content: p,
             updated_at: new Date()
         }));
-        window.dataService.supabase.from('projects').upsert(payload)
-            .then(({ error }) => {
-                if (error) console.error('Cloud Sync Error', error);
-                else console.log('✅ Cloud Sync Success');
-            });
+
+        // Fix: Access local client instance properly
+        const client = window.dataService.supabase.client;
+        if (client) {
+            client.from('projects').upsert(payload)
+                .then(({ error }) => {
+                    if (error) console.error('Cloud Sync Error', error);
+                    else console.log('✅ Cloud Sync Success');
+                });
+        }
     }
 
     // Reload from localStorage to ensure consistency
@@ -408,21 +413,40 @@ window.openModal = function (initId = null) {
 
             ownerSelect.innerHTML = '<option value="" style="background: #1a1a2e; color: white;">Select Owner</option>';
 
-            // 1. Official Owners
-            let owners = [...(OWNERS_BY_ENTITY[entity] || [])];
+            // 1. Get Dynamic Owners from Data (The "Sidebar" Source)
+            let existingOwners = [];
+            if (typeof allInitiatives !== 'undefined' && Array.isArray(allInitiatives)) {
+                existingOwners = allInitiatives
+                    .filter(i => i.entity === entity && i.owner)
+                    .map(i => i.owner);
+            }
+            existingOwners = [...new Set(existingOwners)];
 
-            // 2. Custom Owners (from localStorage)
+            // 2. Determine Source of Truth
+            // If data exists, use Data ONLY (Strict Sync). 
+            // If no data exists, use Defaults (OWNERS_BY_ENTITY) to allow initial entry.
+            let owners = [];
+
+            if (existingOwners.length > 0) {
+                owners = existingOwners;
+            } else {
+                owners = [...(OWNERS_BY_ENTITY[entity] || [])];
+            }
+
+            // 3. Always include Custom Owners
             try {
                 const stored = localStorage.getItem('custom_owners');
                 if (stored) {
                     const allCustom = JSON.parse(stored);
                     const entityCustom = allCustom[entity] || [];
-                    // Merge and unique
+                    console.log(`[Owners] Entity: ${entity}, Custom:`, entityCustom);
                     owners = [...new Set([...owners, ...entityCustom])];
                 }
             } catch (e) {
-                console.error("Error loading custom owners in projects.js", e);
+                console.error("Error loading custom owners", e);
             }
+
+            console.log(`[Owners] Final List for ${entity}:`, owners);
 
             // Sort alphabetically
             owners.sort();
@@ -437,10 +461,48 @@ window.openModal = function (initId = null) {
                     if (owner === selectedOwner) opt.selected = true;
                     ownerSelect.appendChild(opt);
                 });
-            } else {
-                // Fallback if no specific owners defined
-                ownerSelect.innerHTML += `<option value="" disabled style="background: #1a1a2e; color: #aaa;">No owners found for ${entity}</option>`;
             }
+
+            // ADD SPECIAL OPTION: + Add New Owner
+            const addNewOpt = document.createElement('option');
+            addNewOpt.value = '__NEW__';
+            addNewOpt.textContent = '+ Add New Owner...';
+            addNewOpt.style.fontWeight = 'bold';
+            addNewOpt.style.color = '#00f2ea';
+            addNewOpt.style.background = '#1a1a2e';
+            ownerSelect.appendChild(addNewOpt);
+
+            // Attach Listener (Remove old first to avoid duplicates)
+            ownerSelect.onchange = function () {
+                if (this.value === '__NEW__') {
+                    // Prompt User
+                    const newName = prompt("Enter new owner name:");
+                    if (newName && newName.trim() !== "") {
+                        // Save to Custom Owners
+                        try {
+                            const currentEntity = document.getElementById('projectEntity').value;
+                            let allCustom = JSON.parse(localStorage.getItem('custom_owners') || '{}');
+                            if (!allCustom[currentEntity]) allCustom[currentEntity] = [];
+
+                            if (!allCustom[currentEntity].includes(newName)) {
+                                allCustom[currentEntity].push(newName);
+                                localStorage.setItem('custom_owners', JSON.stringify(allCustom));
+
+                                // Refresh List
+                                updateOwnerOptions(currentEntity, newName);
+                            } else {
+                                alert("Owner already exists!");
+                                updateOwnerOptions(currentEntity, newName); // Select existing
+                            }
+                        } catch (e) {
+                            console.error("Error saving new owner:", e);
+                        }
+                    } else {
+                        // Reset to first option if cancelled
+                        this.selectedIndex = 0;
+                    }
+                }
+            };
         }
 
         // Attach change listener to Entity Select (for Admins)
@@ -2067,6 +2129,24 @@ window.updateSidebarStats = function () {
 
     // Initial Stats Load
     setTimeout(updateSidebarStats, 100);
+
+    // AUTO-FIX: Sanitize Custom Owners (Remove PTPN3 owners from PTPN4 if present from testing)
+    try {
+        const storedCO = localStorage.getItem('custom_owners');
+        if (storedCO) {
+            let coData = JSON.parse(storedCO);
+            if (coData['ptpn4'] && Array.isArray(coData['ptpn4'])) {
+                const invalid = "Divisi Pengembangan SDM & Budaya";
+                if (coData['ptpn4'].includes(invalid)) {
+                    console.log('🧹 Cleaning up invalid custom owner for PTPN4...');
+                    coData['ptpn4'] = coData['ptpn4'].filter(o => o !== invalid);
+                    localStorage.setItem('custom_owners', JSON.stringify(coData));
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Error sanitizing custom owners', e);
+    }
 })();
 
 // --- IMPORT / EXPORT DATA LOGIC (EXCEL) ---
