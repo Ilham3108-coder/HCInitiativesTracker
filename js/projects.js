@@ -1669,9 +1669,13 @@ function renderProjects() {
         displayInitiatives = displayInitiatives.filter(p => p.status === currentStatusFilter);
     }
 
-    // Apply owner filter from URL
+    // Apply owner filter from URL (Loose Matching)
     if (filterOwner) {
-        displayInitiatives = displayInitiatives.filter(i => i.owner === filterOwner);
+        const target = decodeURIComponent(filterOwner).toLowerCase().trim();
+        displayInitiatives = displayInitiatives.filter(i => {
+            const owner = (i.owner || '').toLowerCase().trim();
+            return owner.includes(target) || target.includes(owner);
+        });
         // Filter UI ...
         const filterHeader = document.createElement('div');
         filterHeader.style.marginBottom = '20px';
@@ -2110,13 +2114,30 @@ window.updateSidebarStats = function () {
     // Check for URL params
     const urlParams = new URLSearchParams(window.location.search);
     const entityParam = urlParams.get('entity');
+    const ownerParam = urlParams.get('owner');
 
     // Filter by Entity if passed
     if (entityParam) {
         selectEntityFilter(entityParam);
-    } else {
-        renderProjects(); // Default render logic
     }
+
+    // Filter by Owner if passed (from owners.html click)
+    // NOTE: Filtering is handled non-destructively in renderProjects()
+    // We just update the title here for immediate feedback if needed, although renderProjects does it too.
+    if (ownerParam) {
+        console.log(`🔍 Filtering by owner: ${ownerParam}`);
+        const decodedOwner = decodeURIComponent(ownerParam);
+        console.log(`📋 Applying filter for owner "${decodedOwner}"`);
+
+        // Update page title to show filter
+        const mainTitle = document.querySelector('h1');
+        if (mainTitle) {
+            mainTitle.innerHTML = `Initiatives: <span style="color: #00f2ea;">${decodedOwner}</span>`;
+        }
+    }
+
+    // Render projects (with any applied filters)
+    renderProjects();
 
     // Open Modal if requested
     if (urlParams.get('openModal') === 'true') {
@@ -2160,6 +2181,10 @@ window.updateSidebarStats = function () {
                 // Refresh UI
                 renderProjects();
                 if (window.updateSidebarStats) window.updateSidebarStats();
+
+                // SIGNAL: Notify other pages (owners.html) that data is ready
+                window.dispatchEvent(new Event('initiatives-updated'));
+
                 console.log('✅ [Startup] UI refreshed with cloud data.');
             }
         }).catch(err => {

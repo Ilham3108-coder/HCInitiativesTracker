@@ -569,17 +569,11 @@
             let allOwners = new Set();
 
             entityIds.forEach(entityId => {
-                // 1. Official Owners
-                let official = [];
-                if (typeof OWNERS_BY_ENTITY !== 'undefined' && OWNERS_BY_ENTITY[entityId]) {
-                    official = OWNERS_BY_ENTITY[entityId].map(o => cleanOwnerName(o));
-                }
-
-                // 2. Owners from Initiatives
+                // 1. Owners from Initiatives (Dynamic Source of Truth)
                 const entityInitiatives = initiatives.filter(i => (i.entity || 'ptpn3') === entityId);
                 const uniqueData = [...new Set(entityInitiatives.map(i => cleanOwnerName(i.owner)).filter(o => o !== ''))];
 
-                // 3. Custom Owners
+                // 2. Custom Owners (Manual Additions)
                 let custom = [];
                 try {
                     const stored = localStorage.getItem('custom_owners');
@@ -589,8 +583,19 @@
                     }
                 } catch (e) { }
 
-                // Merge unique owners
-                const mergedOwners = [...new Set([...official, ...uniqueData, ...custom])];
+                // 3. Determine Final List (Strict Sync)
+                let mergedOwners = [];
+                if (uniqueData.length > 0) {
+                    // IF data exists, use Data + Custom ONLY (Ignore defaults)
+                    mergedOwners = [...new Set([...uniqueData, ...custom])];
+                } else {
+                    // IF NO data, fallback to Official Defaults
+                    let official = [];
+                    if (typeof OWNERS_BY_ENTITY !== 'undefined' && OWNERS_BY_ENTITY[entityId]) {
+                        official = OWNERS_BY_ENTITY[entityId].map(o => cleanOwnerName(o));
+                    }
+                    mergedOwners = [...new Set([...official, ...custom])];
+                }
 
                 // Filter out deleted owners
                 let deletedOwners = [];
@@ -635,55 +640,43 @@
 
             // Handle "All Entities" selection
             if (entityId === 'all') {
-                // 1. Get ALL Official Owners from ALL Entities
-                let allOfficial = [];
-                if (typeof OWNERS_BY_ENTITY !== 'undefined') {
-                    Object.values(OWNERS_BY_ENTITY).forEach(list => {
-                        if (Array.isArray(list)) {
-                            allOfficial.push(...list.map(o => cleanOwnerName(o)));
-                        }
-                    });
-                }
+                // Simplified All View Logic
+                let allOwners = new Set();
+                Object.keys(ENTITY_NAMES).forEach(eid => {
+                    // Same logic as updateEntityCounts but aggregating names
+                    const entInits = initiatives.filter(i => (i.entity || 'ptpn3') === eid);
+                    const dyn = [...new Set(entInits.map(i => cleanOwnerName(i.owner)).filter(o => o !== ''))];
 
-                // 2. Get Owners from Initiatives
-                const ownersFromData = initiatives.map(i => cleanOwnerName(i.owner)).filter(o => o !== '');
+                    let cust = [];
+                    try {
+                        const stored = localStorage.getItem('custom_owners');
+                        if (stored) cust = (JSON.parse(stored)[eid] || []).map(o => cleanOwnerName(o));
+                    } catch (e) { }
 
-                // 3. Get Custom Owners from LocalStorage
-                let customOwners = [];
-                try {
-                    const stored = localStorage.getItem('custom_owners');
-                    if (stored) {
-                        const allCustom = JSON.parse(stored);
-                        Object.values(allCustom).forEach(list => {
-                            if (Array.isArray(list)) {
-                                customOwners.push(...list.map(o => cleanOwnerName(o)));
-                            }
-                        });
+                    if (dyn.length > 0) {
+                        [...dyn, ...cust].forEach(o => allOwners.add(o));
+                    } else {
+                        const off = (OWNERS_BY_ENTITY[eid] || []).map(o => cleanOwnerName(o));
+                        [...off, ...cust].forEach(o => allOwners.add(o));
                     }
-                } catch (e) { }
+                });
 
-                // 4. Merge & Unique
-                let allOwners = [...new Set([...allOfficial, ...ownersFromData, ...customOwners])].sort();
+                let finalAll = [...allOwners].sort();
 
-                // 5. Filter out deleted
-                let deletedOwners = [];
+                // Filter deleted
+                let del = [];
                 try {
-                    const storedDeleted = localStorage.getItem('deleted_owners');
-                    if (storedDeleted) {
-                        deletedOwners = JSON.parse(storedDeleted).map(o => cleanOwnerName(o));
-                    }
+                    const s = localStorage.getItem('deleted_owners');
+                    if (s) del = JSON.parse(s).map(o => cleanOwnerName(o));
                 } catch (e) { }
-                allOwners = allOwners.filter(o => !deletedOwners.includes(o));
+                finalAll = finalAll.filter(o => !del.includes(o));
 
-                renderOwners(allOwners);
+                renderOwners(finalAll);
                 return;
             }
 
-            // --- INTEGRATION LOGIC START (Normalized) ---
-            // 1. Get official owner list from data.js
-            let officialowners = (OWNERS_BY_ENTITY[entityId] || []).map(o => cleanOwnerName(o));
-
-            // 2. Fallback: Get unique owners from existing initiatives
+            // --- STRICT SYNC LOGIC ---
+            // 1. Get unique owners from existing initiatives (Dynamic)
             const entityInitiatives = initiatives.filter(i => (i.entity || userInfo.entity || 'ptpn1') === entityId);
             const ownersFromData = [...new Set(
                 entityInitiatives
@@ -691,22 +684,33 @@
                     .filter(o => o !== "")
             )];
 
-            // 3. Get Custom Owners from LocalStorage
+            // 2. Get Custom Owners
             let customOwners = [];
             try {
                 const stored = localStorage.getItem('custom_owners');
                 if (stored) {
-                    const allCustom = JSON.parse(stored); // Structure: { 'ptpn3': ['Name'], 'ptpn1': [] }
+                    const allCustom = JSON.parse(stored);
                     customOwners = (allCustom[entityId] || []).map(o => cleanOwnerName(o));
                 }
             } catch (e) {
                 console.error("Error loading custom owners", e);
             }
 
-            // 4. Merge lists (Unique & Clean)
-            let finalOwnerList = [...new Set([...officialowners, ...ownersFromData, ...customOwners])].sort();
+            // 3. Determine Source (Strict)
+            let finalOwnerList = [];
 
-            // 5. Filter out deleted owners from blacklist
+            if (ownersFromData.length > 0) {
+                // IF we have data, we IGNORE the official defaults
+                finalOwnerList = [...new Set([...ownersFromData, ...customOwners])];
+            } else {
+                // Fallback to Official Defaults ONLY if no data exists
+                let officialowners = (OWNERS_BY_ENTITY[entityId] || []).map(o => cleanOwnerName(o));
+                finalOwnerList = [...new Set([...officialowners, ...customOwners])];
+            }
+
+            finalOwnerList.sort();
+
+            // 4. Filter out deleted owners from blacklist
             let deletedOwners = [];
             try {
                 const storedDeleted = localStorage.getItem('deleted_owners');
@@ -981,6 +985,17 @@
 
         // Initial Load - use user's entity
         selectEntity(currentSelectedEntity, document.querySelector(`.entity-btn[data-entity="${currentSelectedEntity}"]`));
+
+        // --- REACTIVE UPDATE LISTENER ---
+        // Listen for Cloud Sync updates from projects.js
+        window.addEventListener('initiatives-updated', () => {
+            console.log('⚡ owners.html received update signal. Refreshing view...');
+            // Re-select current entity to force re-render with new data
+            selectEntity(currentSelectedEntity, document.querySelector(`.entity-btn.active`));
+
+            // Also update counts
+            updateEntityCounts();
+        });
 
     </script>
 </body>
