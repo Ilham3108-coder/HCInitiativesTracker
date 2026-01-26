@@ -2130,6 +2130,43 @@ window.updateSidebarStats = function () {
     // Initial Stats Load
     setTimeout(updateSidebarStats, 100);
 
+    // === CLOUD SYNC ON STARTUP ===
+    // Fetch from Supabase and update local state if cloud is connected
+    if (window.dataService && window.dataService.supabase && window.dataService.supabase.isConnected()) {
+        console.log('☁️ [Startup] Cloud detected, fetching latest data...');
+        window.dataService.getAllInitiatives().then(cloudData => {
+            if (cloudData && cloudData.length > 0) {
+                console.log(`☁️ [Startup] Synced ${cloudData.length} items from Cloud.`);
+                // Update Global State
+                allInitiatives = cloudData;
+                localStorage.setItem('initiatives', JSON.stringify(allInitiatives));
+
+                // Re-apply Entity Filtering
+                const currentUsername = localStorage.getItem('currentUser');
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                const currentUser = users.find(u => u.username === currentUsername);
+
+                if (currentUser && currentUser.role === 'user' && currentUser.entity) {
+                    initiatives = allInitiatives.filter(init => {
+                        const isFromUserEntity = init.entity === currentUser.entity;
+                        const isApproved = init.approvalStatus === 'approved' || init.approvalStatus === 'pending_update' || !init.approvalStatus;
+                        const isOwnInitiative = init.createdBy === currentUser.username;
+                        return (isFromUserEntity && isApproved) || isOwnInitiative;
+                    });
+                } else {
+                    initiatives = allInitiatives;
+                }
+
+                // Refresh UI
+                renderProjects();
+                if (window.updateSidebarStats) window.updateSidebarStats();
+                console.log('✅ [Startup] UI refreshed with cloud data.');
+            }
+        }).catch(err => {
+            console.error('☁️ [Startup] Cloud sync error:', err);
+        });
+    }
+
     // AUTO-FIX: Sanitize Custom Owners (Remove PTPN3 owners from PTPN4 if present from testing)
     try {
         const storedCO = localStorage.getItem('custom_owners');
