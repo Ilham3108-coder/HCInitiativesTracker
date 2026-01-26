@@ -188,15 +188,8 @@
             // Sort by priority and time locally just for display if needed, 
             // but generateAllNotifications might not sort them exactly as the old function did.
             // Let's add sorting back here to be safe
-            const priorityOrder = { critical: 0, high: 1, normal: 2, low: 3 };
-            allNotifications.sort((a, b) => {
-                const pA = a.priority || 'low';
-                const pB = b.priority || 'low';
-                if (priorityOrder[pA] !== priorityOrder[pB]) {
-                    return priorityOrder[pA] - priorityOrder[pB];
-                }
-                return new Date(b.time) - new Date(a.time);
-            });
+            // NEW SORTING: Purely by time descending (Newest First)
+            allNotifications.sort((a, b) => new Date(b.time) - new Date(a.time));
 
             const readNotifications = window.notificationManager.getReadIds();
 

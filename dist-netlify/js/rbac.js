@@ -417,6 +417,12 @@ class RBAC {
 
             notifType = 'rejected_update';
             notifMessage = `Your update request for "${initiative.name}" was rejected. Reason: ${reason}`;
+        } else if (initiative.approvalStatus === 'pending_delete') {
+            // Revert delete request
+            initiative.approvalStatus = 'approved'; // Revert to active state
+
+            notifType = 'rejected_delete';
+            notifMessage = `Your request to delete "${initiative.name}" was rejected. The initiative remains active. Reason: ${reason}`;
         } else {
             // Normal rejection (for new initiatives)
             initiative.approvalStatus = 'rejected';

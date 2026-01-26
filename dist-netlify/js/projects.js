@@ -12,6 +12,26 @@ try {
             console.warn('⚠️ Stored data is invalid or empty, falling back to MOCK');
             allInitiatives = MOCK_INITIATIVES;
         }
+        // AUTO-RESTORE LOGIC: Force update if:
+        // 1. Data count is low (< 28) AND User is NOT Admin (Admins might delete items intentionally)
+        // 2. Data is incorrect (e.g., ID 105 should be ptpn3)
+        // Check for admin role securely
+        const currentUserData = JSON.parse(localStorage.getItem('users') || '[]');
+        const currentUsernameVal = localStorage.getItem('currentUser');
+        const currentUserObj = currentUserData.find(u => u.username === currentUsernameVal);
+        const isAdminUser = currentUserObj && (currentUserObj.role === 'admin' || currentUserObj.role === 'administrator');
+
+        if (!isAdminUser && allInitiatives.length < MOCK_INITIATIVES.length) {
+            console.log('🔄 Detected low data count for NON-ADMIN, forcing restore...');
+            allInitiatives = MOCK_INITIATIVES;
+            localStorage.setItem('initiatives', JSON.stringify(allInitiatives));
+        }
+        else if (allInitiatives.some(i => i.id === 105 && i.entity !== 'ptpn3')) {
+            console.log('🔄 Detected incorrect entity assignment, forcing partial restore...');
+            // Only fix specific items instead of full wipe if possible, but for now full restore ensures consistency
+            allInitiatives = MOCK_INITIATIVES;
+            localStorage.setItem('initiatives', JSON.stringify(allInitiatives));
+        }
     } else {
         console.log('ℹ️ No stored data found, using MOCK data');
         allInitiatives = MOCK_INITIATIVES;
@@ -363,6 +383,38 @@ window.openModal = function (initId = null) {
 
         // Reset form
         if (form) form.reset();
+
+        // Helper to update Owner Options
+        function updateOwnerOptions(entity, selectedOwner = null) {
+            const ownerSelect = document.getElementById('projectOwnerSelect');
+            if (!ownerSelect) return;
+
+            ownerSelect.innerHTML = '<option value="" style="background: #1a1a2e; color: white;">Select Owner</option>';
+
+            if (entity && OWNERS_BY_ENTITY[entity]) {
+                const owners = OWNERS_BY_ENTITY[entity];
+                owners.forEach(owner => {
+                    const opt = document.createElement('option');
+                    opt.value = owner;
+                    opt.textContent = owner;
+                    opt.style.background = '#1a1a2e';
+                    opt.style.color = 'white';
+                    if (owner === selectedOwner) opt.selected = true;
+                    ownerSelect.appendChild(opt);
+                });
+            } else {
+                // Fallback if no specific owners defined
+                ownerSelect.innerHTML += `<option value="" disabled style="background: #1a1a2e; color: #aaa;">No owners found for ${entity}</option>`;
+            }
+        }
+
+        // Attach change listener to Entity Select (for Admins)
+        if (entitySelect) {
+            // Remove old listeners to avoid duplicates (though openModal re-runs, direct assignment overrides)
+            entitySelect.onchange = function () {
+                updateOwnerOptions(this.value);
+            };
+        }
         const subInitContainer = document.getElementById('subInitiativesContainer');
         if (subInitContainer) subInitContainer.innerHTML = '';
 
@@ -391,10 +443,29 @@ window.openModal = function (initId = null) {
                 entityText.value = displayEntity;
                 entityText.style.display = 'block'; // Show readonly text
             }
+
+            // Populate Owners for User's Entity
+            updateOwnerOptions(currentUser.entity);
+
+            // SHOW TEXT INPUT FOR OWNER (As requested "Blank Form")
+            const ownerSelect = document.getElementById('projectOwnerSelect');
+            const ownerInput = document.getElementById('projectOwnerInput');
+            if (ownerSelect) ownerSelect.style.display = 'none';
+            if (ownerInput) {
+                ownerInput.style.display = 'block';
+                ownerInput.value = ''; // Ensure blank for new
+            }
+
         } else {
             // ADMIN OR NO USER: SHOW DROPDOWN
             if (entitySelect) entitySelect.style.display = 'block';
             if (entityText) entityText.style.display = 'none';
+
+            // SHOW DROPDOWN FOR OWNER
+            const ownerSelect = document.getElementById('projectOwnerSelect');
+            const ownerInput = document.getElementById('projectOwnerInput');
+            if (ownerSelect) ownerSelect.style.display = 'block';
+            if (ownerInput) ownerInput.style.display = 'none';
         }
         // --- END ROLE BASED UI ---
 
@@ -415,7 +486,7 @@ window.openModal = function (initId = null) {
 
             // Populate fields with null checks
             const pName = document.getElementById('pName');
-            const projectOwner = document.getElementById('projectOwner');
+            // const projectOwner = document.getElementById('projectOwner'); // OLD
             const pOutput = document.getElementById('pOutput');
             const pStatus = document.getElementById('pStatus');
             const pUrgency = document.getElementById('pUrgency');
@@ -426,7 +497,14 @@ window.openModal = function (initId = null) {
             const pDescription = document.getElementById('pDescription');
 
             if (pName) pName.value = init.name;
-            if (projectOwner) projectOwner.value = init.owner;
+            // UPDATE: Handle Owner Dropdown & Input
+            // First populate options based on entity, then select the owner
+            updateOwnerOptions(init.entity, init.owner);
+
+            // Populate Input as well
+            const ownerInput = document.getElementById('projectOwnerInput');
+            if (ownerInput) ownerInput.value = init.owner;
+
             if (pOutput) pOutput.value = init.output || '';
             if (pStatus) pStatus.value = init.status;
             if (pUrgency) pUrgency.value = init.urgency;
@@ -436,13 +514,31 @@ window.openModal = function (initId = null) {
             if (pCost) pCost.value = init.cost || '';
             if (pDescription) pDescription.value = init.description || '';
 
-            // For edit mode, always show dropdown
-            if (entitySelect) {
-                entitySelect.value = init.entity;
-                entitySelect.style.display = 'block';
-                entitySelect.removeAttribute('disabled');
+            // For edit mode:
+            // IF User -> KEEP LOCKED (Don't showing dropdown)
+            // IF Admin -> Show Dropdown
+            if (isUserRole) {
+                if (entitySelect) entitySelect.style.display = 'none';
+                if (entityText) entityText.style.display = 'block';
+
+                // Show Input for User
+                const ownerSelect = document.getElementById('projectOwnerSelect');
+                if (ownerSelect) ownerSelect.style.display = 'none';
+                if (ownerInput) ownerInput.style.display = 'block';
+
+            } else {
+                if (entitySelect) {
+                    entitySelect.value = init.entity;
+                    entitySelect.style.display = 'block';
+                    entitySelect.removeAttribute('disabled');
+                }
+                if (entityText) entityText.style.display = 'none';
+
+                // Show Dropdown for Admin
+                const ownerSelect = document.getElementById('projectOwnerSelect');
+                if (ownerSelect) ownerSelect.style.display = 'block';
+                if (ownerInput) ownerInput.style.display = 'none';
             }
-            if (entityText) entityText.style.display = 'none';
 
             // Render sub-initiatives
             if (init.subInitiatives && init.subInitiatives.length > 0) {
@@ -520,6 +616,18 @@ window.openModal = function (initId = null) {
                     });
                 }
                 if (entityText) entityText.style.display = 'none';
+
+                // --- NEW: Toggle Owner Input vs Select for Admin ---
+                const ownerSelect = document.getElementById('projectOwnerSelect');
+                const ownerInput = document.getElementById('projectOwnerInput');
+
+                if (ownerSelect) ownerSelect.style.display = 'block';
+                if (ownerInput) ownerInput.style.display = 'none';
+
+                // Trigger option update based on default entity
+                if (entitySelect && typeof updateOwnerOptions === 'function') {
+                    updateOwnerOptions(entitySelect.value);
+                }
             }
 
             if (typeof addSubInitiativeField === 'function') addSubInitiativeField();
@@ -597,18 +705,40 @@ window.handleProjectSubmit = function (e) {
     if (entitySelect) entitySelect.removeAttribute('disabled');
 
     // Get Values - using CORRECT IDs from projects.html
+    // Get Values - using CORRECT IDs from projects.html
     const id = document.getElementById('projectId').value;
     const nameInput = document.getElementById('pName');
-    const ownerInput = document.getElementById('projectOwner');
+    // const ownerInput = document.getElementById('projectOwner'); // OLD
     const outputInput = document.getElementById('pOutput');
-    const dateInput = document.getElementById('pDate'); // Correct ID is pDate, not pDueDate
+    const dateInput = document.getElementById('pDate'); // Correct ID is pDate
     const progressInput = document.getElementById('pProgress');
     const budgetInput = document.getElementById('pBudget');
     const costInput = document.getElementById('pCost');
 
+    // Get Value Based on Visible Input
+    const ownerSelect = document.getElementById('projectOwnerSelect');
+    const ownerInput = document.getElementById('projectOwnerInput');
+    let finalOwner = '';
+
+    // Check if user is user role
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const currentUserInfo = users.find(u => u.username === localStorage.getItem('currentUser'));
+    const isUserRole = currentUserInfo && currentUserInfo.role && currentUserInfo.role.toLowerCase() === 'user';
+
+    // Explicitly check visibility or role to grab the correct value
+    if (isUserRole) {
+        finalOwner = ownerInput ? ownerInput.value : '';
+    } else {
+        finalOwner = ownerSelect ? ownerSelect.value : '';
+    }
+
+    // Fallback if empty (should be required though)
+    if (!finalOwner && ownerInput && ownerInput.value) finalOwner = ownerInput.value;
+
+
     // Safely get values with defaults
     const name = nameInput ? nameInput.value : 'New Initiative';
-    const owner = ownerInput ? ownerInput.value : '';
+    const owner = finalOwner;
     const output = outputInput ? outputInput.value : '';
     const entity = entitySelect ? entitySelect.value : 'All';
     const dueDate = dateInput ? dateInput.value : '';
@@ -1077,48 +1207,65 @@ window.toggleActions = function (event, id) {
 
 window.deleteProject = function (id) {
     console.log('deleteProject called with ID:', id);
+
+    // 1. Check User Role
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const currentUserInfo = users.find(u => u.username === localStorage.getItem('currentUser'));
+    const isUserRole = currentUserInfo && currentUserInfo.role && currentUserInfo.role.toLowerCase() === 'user';
+    const initId = id;
+
+    // 2. Load latest data
     const initiative = allInitiatives.find(i => i.id == id);
 
     if (!initiative) {
-        showAlert('Error', 'Initiative not found');
+        showAlert('Error', 'Initiative not found.');
         return;
     }
 
-    // Check RBAC permission
-    if (window.rbac && !window.rbac.canDelete(initiative)) {
-        showAlert('Access Denied', '❌ You cannot delete this initiative. Only pending or rejected initiatives can be deleted.');
-        return;
-    }
+    // 3. Logic Branch
+    if (isUserRole) {
+        // --- USER: REQUEST DELETE ---
+        showConfirmation('Request Deletion', 'Request deletion for this initiative? Admin approval required.', function () {
+            initiative.approvalStatus = 'pending_delete';
+            initiative.updatedAt = new Date().toISOString();
 
-    showConfirmation('Delete Initiative', 'Are you sure you want to delete this project?', function () {
-        const initiativeName = initiative.name;
-        const creator = initiative.createdBy;
-        const currentUsername = localStorage.getItem('currentUser');
+            saveState(); // Uses global saveState
 
-        // Send notifications if admin is deleting
-        if (window.rbac?.isAdmin() && window.notificationManager) {
-            // Broadcast to all users
-            window.notificationManager.broadcastToAllUsers(
-                'warning',
-                `Administrator deleted initiative: "${initiativeName}"`,
-                currentUsername
-            );
-
-            // Special notification for creator
-            if (creator && creator !== currentUsername) {
-                window.notificationManager.add(
-                    'warning',
-                    `Your initiative "${initiativeName}" was deleted by administrator`,
-                    creator
-                );
+            // Notification
+            if (window.addNotification) {
+                window.addNotification('info', `Deletion requested for "${initiative.name}"`, currentUserInfo.username);
             }
-        }
 
-        allInitiatives = allInitiatives.filter(i => i.id !== id);
-        saveState();
-        showAlert('Success', 'Initiative deleted successfully!');
-    });
-}
+            // Replaced Alert with Toast/Notification if available, or just refresh
+            if (window.showToast) window.showToast('Deletion request sent to Admin');
+
+            renderProjects();
+            closeModal();
+        });
+
+    } else {
+        // --- ADMIN: DELETE IMMEDIATELY ---
+        showConfirmation('Delete Initiative', 'Are you sure you want to delete this initiative? This cannot be undone.', function () {
+            // Remove from global array
+            const globalIndex = allInitiatives.findIndex(i => i.id == id);
+            if (globalIndex !== -1) allInitiatives.splice(globalIndex, 1);
+
+            saveState();
+
+            // Notification
+            if (window.addNotification) {
+                window.addNotification('warning', `Initiative "${initiative.name}" was deleted`, 'Admin');
+            }
+
+            renderProjects();
+            closeModal();
+
+            if (window.showToast) window.showToast('Initiative deleted successfully');
+        });
+    }
+};
+
+
 
 // Handler: Update Activity Progress
 window.updateActivityProgress = function (initId, actIndex, newProgress) {
@@ -1302,11 +1449,11 @@ window.selectEntityFilter = function (entity) {
     // Update button states
     document.querySelectorAll('.entity-btn').forEach(btn => {
         if (btn.getAttribute('data-entity') === entity) {
-            btn.style.background = 'linear-gradient(135deg, #00ff9d, #00f2ea)';
-            btn.style.color = 'black';
+            btn.style.background = 'linear-gradient(135deg, #0088ff, #00f2ea)';
+            btn.style.color = 'white';
         } else if (btn.getAttribute('data-entity') === 'all') {
-            btn.style.background = entity === 'all' ? 'linear-gradient(135deg, #00ff9d, #00f2ea)' : 'rgba(255,255,255,0.05)';
-            btn.style.color = entity === 'all' ? 'black' : 'white';
+            btn.style.background = entity === 'all' ? 'linear-gradient(135deg, #0088ff, #00f2ea)' : 'rgba(255,255,255,0.05)';
+            btn.style.color = entity === 'all' ? 'white' : 'white';
         } else {
             btn.style.background = 'rgba(255,255,255,0.05)';
             btn.style.color = 'white';

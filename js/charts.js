@@ -1,18 +1,98 @@
 // js/charts.js
 // Shared Chart Rendering Logic module.
 
-// Constants - Softer, cohesive color palette
-const C_DONE = '#4ade80';      // Soft green
-const C_ONGOING = '#60a5fa';   // Soft blue
-const C_HOLD = '#fb923c';      // Soft orange
-const C_NOT_STARTED = '#94a3b8'; // Slate gray
-const C_CARRY = '#fbbf24';     // Soft amber
-const C_CANCEL = '#f87171';    // Soft red
+// Neon Infographic Palette (Updated for vibrant tones)
+const NEON_CYAN = '#00f2ff';
+const NEON_BLUE = '#0066ff';
+const NEON_PURPLE = '#bc00ff';
+const NEON_PINK = '#ff00ff';
+const NEON_AMBER = '#fbbf24';
+const NEON_RED = '#ff3131';
+const NEON_BLACK = '#000000';
+const DEEP_BLUE = '#050c38';
+const DEEP_PURPLE = '#31006a';
 
-// Owner colors - cohesive palette with variations
-const C_OWNERS = ['#60a5fa', '#4ade80', '#a78bfa', '#f472b6', '#22d3ee', '#fbbf24', '#fb923c', '#94a3b8'];
-// Urgency colors - High (red), Medium (amber), Low (green)
-const C_URGENCY = ['#f87171', '#fbbf24', '#4ade80'];
+const C_DONE = NEON_CYAN;
+const C_ONGOING = NEON_BLUE;
+const C_HOLD = NEON_AMBER;
+const C_NOT_STARTED = '#475569';
+const C_CARRY = '#fbbf24';
+const C_CANCEL = '#64748b';
+
+// Owner gradient colors (brighter top to deeper bottom)
+const C_OWNERS_GRADIENT = [
+    [NEON_CYAN, DEEP_BLUE],
+    [NEON_BLUE, DEEP_BLUE],
+    [NEON_PURPLE, DEEP_PURPLE],
+    [NEON_PINK, DEEP_PURPLE],
+    ['#00ffaa', '#004d33'],
+    [NEON_AMBER, DEEP_PURPLE],
+    ['#ff8c00', DEEP_PURPLE],
+    ['#475569', NEON_BLACK]
+];
+
+// Urgency gradient colors
+const C_URGENCY_GRADIENT = [
+    [NEON_PINK, DEEP_PURPLE],   // High
+    [NEON_AMBER, DEEP_PURPLE],  // Medium
+    [NEON_CYAN, DEEP_BLUE]      // Low
+];
+
+// Status gradient colors
+const C_STATUS_GRADIENT = {
+    done: [NEON_CYAN, '#003d6d'],
+    ongoing: [NEON_BLUE, '#001a4d'],
+    hold: [NEON_AMBER, '#7a4a00'],
+    notStarted: ['#475569', '#1e293b'],
+    carry: [NEON_AMBER, '#7a4a00'],
+    cancel: ['#64748b', '#334155']
+};
+
+// Precise Gradient Helper using Chart Area
+function createChartGradient(ctx, startColor, endColor, isHorizontal = false, chartArea = null) {
+    if (!ctx) return startColor;
+    const canvas = ctx.canvas;
+    let gradient;
+
+    // Scale to chart area if provided for "per-bar" feel
+    if (chartArea) {
+        if (isHorizontal) {
+            gradient = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
+        } else {
+            gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+        }
+    } else {
+        if (isHorizontal) {
+            gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+        } else {
+            gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        }
+    }
+
+    gradient.addColorStop(0, endColor);   // Bottom
+    gradient.addColorStop(1, startColor); // Top
+    return gradient;
+}
+
+// Circular/Radial Gradient Helper for Pie/Doughnut Charts
+function createCircularGradient(ctx, startColor, endColor, chartArea) {
+    if (!ctx || !chartArea) return startColor;
+    const cx = (chartArea.left + chartArea.right) / 2;
+    const cy = (chartArea.top + chartArea.bottom) / 2;
+    const r = Math.min(chartArea.right - chartArea.left, chartArea.bottom - chartArea.top) / 2;
+
+    // Radial gradient from inner to outer to create depth
+    const gradient = ctx.createRadialGradient(cx, cy, r * 0.5, cx, cy, r);
+    gradient.addColorStop(0, endColor);   // Inner (Darker)
+    gradient.addColorStop(1, startColor); // Outer (Vibrant Neon)
+    return gradient;
+}
+
+// Helper function to get gradient array for chart datasets
+function getGradientColors(ctx, colorPairs) {
+    if (!ctx) return colorPairs.map(p => p[0]);
+    return colorPairs.map(pair => createChartGradient(ctx, pair[0], pair[1]));
+}
 
 // Helper
 function destroyChart(id) {
@@ -37,7 +117,18 @@ function renderOwnerDistChart(initiatives, owners) {
         type: 'pie',
         data: {
             labels: ownerShortNames,
-            datasets: [{ label: 'Total Projects', data: ownerCounts, backgroundColor: C_OWNERS, borderWidth: 0 }]
+            datasets: [{
+                label: 'Total Projects',
+                data: ownerCounts,
+                backgroundColor: (context) => {
+                    const { ctx, chartArea } = context.chart;
+                    if (!chartArea) return null;
+                    const index = context.dataIndex;
+                    const pair = C_OWNERS_GRADIENT[index % C_OWNERS_GRADIENT.length];
+                    return createCircularGradient(ctx, pair[0], pair[1], chartArea);
+                },
+                borderWidth: 0
+            }]
         },
         options: {
             responsive: true,
@@ -85,7 +176,13 @@ function renderRiskChart(initiatives) {
             labels: ['High Risk (<7 Days)', 'Medium Risk (<30 Days)', 'Low Risk'],
             datasets: [{
                 data: [riskCounts.High, riskCounts.Medium, riskCounts.Low],
-                backgroundColor: C_URGENCY,
+                backgroundColor: (context) => {
+                    const { ctx, chartArea } = context.chart;
+                    if (!chartArea) return null;
+                    const index = context.dataIndex;
+                    const pair = C_URGENCY_GRADIENT[index % C_URGENCY_GRADIENT.length];
+                    return createCircularGradient(ctx, pair[0], pair[1], chartArea);
+                },
                 borderWidth: 0
             }]
         },
@@ -141,7 +238,18 @@ function renderKeyRiskChart(initiatives) {
             labels: ['High Risk', 'Medium Risk', 'Low Risk'],
             datasets: [{
                 data: [riskCounts.High, riskCounts.Medium, riskCounts.Low],
-                backgroundColor: ['#f87171', '#fbbf24', '#4ade80'],
+                backgroundColor: (context) => {
+                    const { ctx, chartArea } = context.chart;
+                    if (!chartArea) return null;
+                    const index = context.dataIndex;
+                    const colors = [
+                        [NEON_PINK, DEEP_PURPLE],
+                        [NEON_AMBER, DEEP_PURPLE],
+                        [NEON_CYAN, DEEP_BLUE]
+                    ];
+                    const pair = colors[index % colors.length];
+                    return createCircularGradient(ctx, pair[0], pair[1], chartArea);
+                },
                 borderWidth: 0
             }]
         },
@@ -202,7 +310,20 @@ function renderKeyActivityDurationChart(initiatives) {
             datasets: [{
                 label: 'Activities Completed',
                 data: Object.values(buckets),
-                backgroundColor: ['#4ade80', '#22d3ee', '#60a5fa', '#f87171'],
+                backgroundColor: (context) => {
+                    const chart = context.chart;
+                    const { ctx, chartArea } = chart;
+                    if (!chartArea) return null;
+                    const index = context.dataIndex;
+                    const colors = [
+                        [NEON_CYAN, DEEP_BLUE],
+                        ['#22d3ee', DEEP_BLUE],
+                        [NEON_BLUE, DEEP_BLUE],
+                        [NEON_PINK, DEEP_PURPLE]
+                    ];
+                    const pair = colors[index % colors.length];
+                    return createChartGradient(ctx, pair[0], pair[1], false, chartArea);
+                },
                 borderRadius: 4
             }]
         },
@@ -260,7 +381,11 @@ function renderSpeedChart(initiatives, owners) {
             datasets: [{
                 label: 'Avg Speed (Days)',
                 data: ownerShortNames.map(() => Math.floor(Math.random() * 20) + 5), // Mock Data
-                backgroundColor: '#22d3ee',
+                backgroundColor: (context) => {
+                    const { ctx, chartArea } = context.chart;
+                    if (!chartArea) return null;
+                    return createChartGradient(ctx, NEON_CYAN, DEEP_BLUE, false, chartArea);
+                },
                 borderRadius: 4
             }]
         },
@@ -304,8 +429,21 @@ function renderFinancialChart(initiatives, owners) {
         data: {
             labels: ownerShortNames,
             datasets: [
-                { label: 'Anggaran RKAP (Juta)', data: budgetData, backgroundColor: '#22d3ee', borderRadius: 4 },
-                { label: 'Realisasi Biaya (Juta)', data: costData, backgroundColor: '#f87171', borderRadius: 4 }
+                {
+                    label: 'Anggaran RKAP (Juta)',
+                    data: budgetData,
+                    backgroundColor: (ctx) => createChartGradient(ctx.chart.ctx, NEON_CYAN, DEEP_BLUE, false, ctx.chart.chartArea),
+                    borderRadius: 4
+                },
+                {
+                    label: 'Realisasi Biaya (Juta)',
+                    data: costData,
+                    backgroundColor: (ctx) => {
+                        if (ctx.type !== 'data' || !ctx.chart.chartArea) return NEON_AMBER;
+                        return createChartGradient(ctx.chart.ctx, NEON_AMBER, '#7a4a00', false, ctx.chart.chartArea);
+                    },
+                    borderRadius: 4
+                }
             ]
         },
         options: {
@@ -349,7 +487,15 @@ function renderStatusDistChart(initiatives) {
             labels: ['Done', 'On Going', 'Hold', 'Not Started', 'Carry Over', 'Cancelled'],
             datasets: [{
                 data: [stats.done, stats.onGoing, stats.hold, stats.notStarted, stats.carryOver, stats.cancelled],
-                backgroundColor: [C_DONE, C_ONGOING, C_HOLD, C_NOT_STARTED, C_CARRY, C_CANCEL],
+                backgroundColor: (context) => {
+                    const { ctx, chartArea } = context.chart;
+                    const index = context.dataIndex;
+                    const statuses = ['done', 'ongoing', 'hold', 'notStarted', 'carry', 'cancel'];
+                    const status = statuses[index];
+                    const pair = C_STATUS_GRADIENT[status] || [NEON_CYAN, '#003d6d'];
+                    if (!chartArea) return pair[0];
+                    return createCircularGradient(ctx, pair[0], pair[1], chartArea);
+                },
                 borderWidth: 0
             }]
         },
@@ -385,11 +531,17 @@ function renderWorkloadChart(initiatives, owners) {
 
     const datasets = statuses.map((status) => {
         const data = owners.map(owner => initiatives.filter(i => i.owner === owner && i.status === status).length);
-        let color = C_NOT_STARTED;
-        if (status === 'Done') color = C_DONE;
-        if (status === 'On Going') color = C_ONGOING;
-        if (status === 'Hold') color = C_HOLD;
-        return { label: status, data: data, backgroundColor: color, stack: 'Stack 0' };
+        const pair = C_STATUS_GRADIENT[status.toLowerCase().replace(' ', '')] || [NEON_CYAN, DEEP_BLUE];
+        return {
+            label: status,
+            data: data,
+            backgroundColor: (context) => {
+                const { ctx, chartArea } = context.chart;
+                if (!chartArea) return null;
+                return createChartGradient(ctx, pair[0], pair[1], false, chartArea);
+            },
+            stack: 'Stack 0'
+        };
     });
 
     new Chart(canvas, {
@@ -431,8 +583,8 @@ function renderSCurveChart(initiatives) {
         data: {
             labels: labels,
             datasets: [
-                { label: 'Cumulative Budget (Juta)', data: budgetData, borderColor: '#22d3ee', backgroundColor: 'rgba(34, 211, 238, 0.1)', fill: true, tension: 0.4 },
-                { label: 'Cumulative Cost (Juta)', data: costData, borderColor: '#f87171', backgroundColor: 'rgba(248, 113, 113, 0.1)', fill: true, tension: 0.4 }
+                { label: 'Cumulative Budget (Juta)', data: budgetData, borderColor: NEON_CYAN, backgroundColor: 'rgba(0, 242, 255, 0.1)', fill: true, tension: 0.4 },
+                { label: 'Cumulative Cost (Juta)', data: costData, borderColor: NEON_PINK, backgroundColor: 'rgba(255, 0, 255, 0.1)', fill: true, tension: 0.4 }
             ]
         },
         options: {
@@ -468,12 +620,28 @@ function renderAgingChart(initiatives) {
         else if (pseudoRef < 90) agingData['60 - 90 Days']++;
         else agingData['> 90 Days']++;
     });
-
     new Chart(canvas, {
         type: 'bar',
         data: {
             labels: Object.keys(agingData),
-            datasets: [{ label: 'Number of Tasks', data: Object.values(agingData), backgroundColor: ['#4ade80', '#22d3ee', '#fbbf24', '#f87171'], borderRadius: 4 }]
+            datasets: [{
+                label: 'Number of Tasks',
+                data: Object.values(agingData),
+                backgroundColor: (context) => {
+                    const { ctx, chartArea } = context.chart;
+                    if (!chartArea) return null;
+                    const index = context.dataIndex;
+                    const pairs = [
+                        ['#00ff9d', '#004d33'],     // < 30 Days (Green)
+                        [NEON_BLUE, '#001a4d'],     // 30 - 60 Days (Blue)
+                        [NEON_AMBER, '#7a4a00'],    // 60 - 90 Days (Yellow)
+                        [NEON_RED, '#5e0707']       // > 90 Days (Red)
+                    ];
+                    const p = pairs[index % pairs.length];
+                    return createChartGradient(ctx, p[0], p[1], false, chartArea);
+                },
+                borderRadius: 4
+            }]
         },
         options: {
             responsive: true, maintainAspectRatio: false,
@@ -509,8 +677,21 @@ function renderVelocityChart(initiatives) {
         data: {
             labels: months,
             datasets: [
-                { label: 'Planned', data: counts, backgroundColor: '#22d3ee', borderRadius: 4 },
-                { label: 'Completed', data: doneCounts, backgroundColor: '#4ade80', borderRadius: 4 }
+                {
+                    label: 'Planned',
+                    data: counts,
+                    backgroundColor: (ctx) => {
+                        if (ctx.type !== 'data' || !ctx.chart.chartArea) return NEON_AMBER;
+                        return createChartGradient(ctx.chart.ctx, NEON_AMBER, '#7a4a00', false, ctx.chart.chartArea);
+                    },
+                    borderRadius: 4
+                },
+                {
+                    label: 'Completed',
+                    data: doneCounts,
+                    backgroundColor: (ctx) => createChartGradient(ctx.chart.ctx, NEON_CYAN, DEEP_BLUE, false, ctx.chart.chartArea),
+                    borderRadius: 4
+                }
             ]
         },
         options: {
@@ -541,11 +722,11 @@ function renderProgressTrendChart(initiatives) {
             datasets: [{
                 label: 'Overall Progress (%)',
                 data: trendData,
-                borderColor: '#22d3ee',
-                backgroundColor: 'rgba(34, 211, 238, 0.1)',
+                borderColor: NEON_CYAN,
+                backgroundColor: 'rgba(0, 242, 255, 0.1)',
                 fill: true,
                 tension: 0.4,
-                pointBackgroundColor: '#22d3ee'
+                pointBackgroundColor: NEON_CYAN
             }]
         },
         options: {
@@ -598,7 +779,7 @@ function renderSidebarStats(initiatives) {
         <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); margin-top: auto;">
             <div style="font-size: 11px; color: #a0a0b0; margin-bottom: 8px; text-transform: uppercase; font-weight: 600;">Completion Rate</div>
             <div style="height: 6px; background: rgba(0,0,0,0.3); border-radius: 3px; overflow: hidden; margin-bottom: 8px;">
-                <div style="height: 100%; width: ${percent}%; background: #4ade80; transition: width 0.5s ease;"></div>
+                <div style="height: 100%; width: ${percent}%; background: ${NEON_CYAN}; box-shadow: 0 0 10px ${NEON_CYAN}; transition: width 0.5s ease;"></div>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: white;">
                 <span style="font-weight: bold;">${percent}%</span>
@@ -659,13 +840,25 @@ function renderKeyActivityTimelineChart(initiatives) {
     const effectiveCount = counts.completed + counts.onSchedule;
     const effectivePercent = total > 0 ? Math.round((effectiveCount / total) * 100) : 0;
 
+    const ctx = canvas.getContext('2d');
     new Chart(canvas, {
         type: 'doughnut',
         data: {
             labels: ['Completed', 'On Schedule', 'Overdue'],
             datasets: [{
                 data: [counts.completed, counts.onSchedule, counts.overdue],
-                backgroundColor: ['#4ade80', '#60a5fa', '#f87171'], // Soft Green, Blue, Red
+                backgroundColor: (context) => {
+                    const { ctx, chartArea } = context.chart;
+                    const index = context.dataIndex;
+                    const pairs = [
+                        [NEON_CYAN, '#003d6d'],
+                        [NEON_AMBER, '#7a4a00'],
+                        [NEON_RED, '#5e0707']
+                    ];
+                    const pair = pairs[index % pairs.length];
+                    if (!chartArea) return pair[0];
+                    return createCircularGradient(ctx, pair[0], pair[1], chartArea);
+                },
                 borderWidth: 0
             }]
         },
@@ -788,9 +981,33 @@ function renderKeyActivityTimelineByOwnerChart(initiatives, owners) {
         data: {
             labels: ownerShortNames,
             datasets: [
-                { label: 'Completed', data: dataCompleted, backgroundColor: '#4ade80', borderRadius: 4, stack: 'Stack 0' },
-                { label: 'On Schedule', data: dataOnSchedule, backgroundColor: '#60a5fa', borderRadius: 4, stack: 'Stack 0' },
-                { label: 'Overdue', data: dataOverdue, backgroundColor: '#f87171', borderRadius: 4, stack: 'Stack 0' }
+                {
+                    label: 'Completed',
+                    data: dataCompleted,
+                    backgroundColor: (ctx) => {
+                        if (ctx.type !== 'data' || !ctx.chart.chartArea) return NEON_CYAN;
+                        return createChartGradient(ctx.chart.ctx, NEON_CYAN, '#003d6d', false, ctx.chart.chartArea);
+                    },
+                    borderRadius: 4, stack: 'Stack 0'
+                },
+                {
+                    label: 'On Schedule',
+                    data: dataOnSchedule,
+                    backgroundColor: (ctx) => {
+                        if (ctx.type !== 'data' || !ctx.chart.chartArea) return NEON_AMBER;
+                        return createChartGradient(ctx.chart.ctx, NEON_AMBER, '#7a4a00', false, ctx.chart.chartArea);
+                    },
+                    borderRadius: 4, stack: 'Stack 0'
+                },
+                {
+                    label: 'Overdue',
+                    data: dataOverdue,
+                    backgroundColor: (ctx) => {
+                        if (ctx.type !== 'data' || !ctx.chart.chartArea) return NEON_RED;
+                        return createChartGradient(ctx.chart.ctx, NEON_RED, '#5e0707', false, ctx.chart.chartArea);
+                    },
+                    borderRadius: 4, stack: 'Stack 0'
+                }
             ]
         },
         options: {

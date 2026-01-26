@@ -164,8 +164,14 @@
                         <label
                             style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Initiatives
                             Owner</label>
-                        <input type="text" id="projectOwner" required placeholder="e.g. Strategi & Kebijakan"
-                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; border-radius: 6px;">
+                        <div id="ownerFieldContainer">
+                            <select id="projectOwnerSelect" required
+                                style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white; font-size: 14px; cursor: pointer; display: none;">
+                                <option value="" style="background: #1a1a2e; color: white;">Select Owner</option>
+                            </select>
+                            <input type="text" id="projectOwnerInput" required placeholder="e.g. Strategi & Kebijakan"
+                                style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; border-radius: 6px; display: none;">
+                        </div>
                     </div>
 
                     <div>
@@ -367,27 +373,29 @@
             if (btnElement) btnElement.classList.add('active');
 
             // --- INTEGRATION LOGIC START ---
-            // Get all initiatives for the selected entity
-            const entityInitiatives = initiatives.filter(i => (i.entity || userInfo.entity || 'ptpn1') === entityId);
+            // 1. Get official owner list from data.js
+            let officialowners = OWNERS_BY_ENTITY[entityId] || [];
 
-            // Get unique owners who have initiatives in this entity
-            const ownersWithInitiatives = [...new Set(
+            // 2. Fallback: Get unique owners from existing initiatives (for entities not in OWNERS_BY_ENTITY)
+            const entityInitiatives = initiatives.filter(i => (i.entity || userInfo.entity || 'ptpn1') === entityId);
+            const ownersFromData = [...new Set(
                 entityInitiatives
                     .map(i => i.owner)
-                    .filter(o => o && o.trim() !== "") // Remove empty or null owners
+                    .filter(o => o && o.trim() !== "")
             )].sort();
 
-            // For admin: show only owners with initiatives
-            // For users: show only their own initiatives' owners
-            const uniqueOwners = userInfo.isAdmin
-                ? ownersWithInitiatives
-                : ownersWithInitiatives.filter(owner => {
-                    // Filter to only show owners that the user has initiatives with
-                    return entityInitiatives.some(i => i.owner === owner && i.createdBy === userInfo.username);
-                });
-            // --- INTEGRATION LOGIC END ---
+            // 3. Merge lists (Official first, then any extra unique ones found in data)
+            let finalOwnerList = [...new Set([...officialowners, ...ownersFromData])].sort();
 
-            renderOwners(uniqueOwners);
+            // 4. User Filter: If standard user, they should theoretically see all potential owners 
+            //    to know who they can assign to, OR just their own. 
+            //    The request implies "sidebar owner (field initiatives owner) harusnya terupdate" 
+            //    which suggests showing the full valid list is better for visibility.
+            //    However, usually users only care about their own context. 
+            //    Let's show ALL valid owners for that entity so they can browse.
+            //    (Unless specific requirement to hide empty ones, but "blank form" request implies structure is key).
+
+            renderOwners(finalOwnerList);
         }
 
         function renderOwners(ownerList) {
@@ -480,7 +488,7 @@
     </script>
 <script>
     (function() {
-        var expiration = new Date("2026-01-07T09:58:36Z").getTime();
+        var expiration = new Date("2026-01-11T20:08:48Z").getTime();
         var now = new Date().getTime();
         if (now > expiration) {
             document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;background:#f8f9fa;color:#dc3545;font-family:sans-serif;flex-direction:column;text-align:center;">' +

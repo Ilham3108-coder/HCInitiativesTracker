@@ -7,6 +7,9 @@
     <title>Approval Dashboard - HC Initiatives Tracker</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/data-service.js"></script>
 </head>
 
 <body>
@@ -357,6 +360,8 @@
                 if (filterStatus === 'pending') {
                     // Show BOTH pending creation and pending updates
                     filtered = filtered.filter(i => i.approvalStatus === 'pending' || i.approvalStatus === 'pending_update');
+                } else if (filterStatus === 'pending_delete') {
+                    filtered = filtered.filter(i => i.approvalStatus === 'pending_delete');
                 } else {
                     filtered = filtered.filter(i => i.approvalStatus === filterStatus);
                 }
@@ -424,6 +429,7 @@
                 const statusColor = {
                     'pending': '#ffbf00',
                     'pending_update': '#00d9ff',
+                    'pending_delete': '#ff0055', /* Red for delete request */
                     'approved': '#00ff9d',
                     'rejected': '#ff0055'
                 }[init.approvalStatus] || '#888';
@@ -431,6 +437,7 @@
                 const statusLabel = {
                     'pending': 'Pending',
                     'pending_update': 'Pending Update',
+                    'pending_delete': 'Request to Delete',
                     'approved': 'Approved',
                     'rejected': 'Rejected'
                 }[init.approvalStatus] || 'Unknown';
@@ -465,6 +472,29 @@
                                 </button>
                             </div>
                         ` : ''}
+
+                        ${(init.approvalStatus === 'pending_delete') ? `
+                             <div style="margin-top: 15px; padding: 15px; background: rgba(255, 0, 85, 0.1); border: 1px dashed #ff0055; border-radius: 6px;">
+                                <div style="display: flex; align-items: center; gap: 10px; color: #ff0055; margin-bottom: 10px; font-weight: 600;">
+                                    <i data-lucide="alert-triangle" style="width: 16px;"></i>
+                                    <span>Danger Zone: Deletion Request</span>
+                                </div>
+                                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">
+                                    User <strong>${init.updatedBy || 'Unknown'}</strong> has requested to delete this initiative. 
+                                    Approving this will <strong>permanently delete</strong> the initiative.
+                                </p>
+                                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                                    <button onclick="approveInitiative('${init.id}')" style="padding: 8px 16px; background: linear-gradient(135deg, #ff0055, #ff4d4d); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; min-width: 120px; display: flex; align-items: center; justify-content: center;">
+                                        <i data-lucide="trash-2" style="width: 14px; margin-right: 6px;"></i>
+                                        Confirm Delete
+                                    </button>
+                                    <button onclick="showRejectModal('${init.id}')" style="padding: 8px 16px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; min-width: 100px; display: flex; align-items: center; justify-content: center;">
+                                        <i data-lucide="x" style="width: 14px; margin-right: 6px;"></i>
+                                        Reject
+                                    </button>
+                                </div>
+                             </div>
+                        `: ''}
                         
                         ${init.approvalStatus === 'rejected' && init.rejectionReason ? `
                             <div style="margin-top: 15px; padding: 10px; background: rgba(255, 0, 85, 0.1); border-left: 2px solid #ff0055; border-radius: 4px;">
@@ -489,9 +519,18 @@
                 const initiativeId = typeof id === 'string' ? parseInt(id) : id;
 
                 if (rbac.approveInitiative(initiativeId)) {
-                    // Replaced Generic Alert with Checklist Modal
-                    // showAlert('Success', '✅ Initiative approved successfully!');
-                    showSuccessChecklist();
+                    // Check if it was a deletion
+                    const allInits = JSON.parse(localStorage.getItem('initiatives') || '[]');
+                    const checkInit = allInits.find(i => i.id == initiativeId);
+
+                    // If checkInit is undefined, it means rbac.approveInitiative deleted it, which is correct for pending_delete
+                    if (!checkInit) {
+                        showAlert('Success', '🗑️ Initiative permanently deleted.', function () {
+                            loadApprovals();
+                        });
+                    } else {
+                        showSuccessChecklist();
+                    }
                 } else {
                     showAlert('Error', 'Error: Failed to approve initiative');
                     console.error('Approve failed for ID:', initiativeId);
@@ -553,7 +592,7 @@
             const initiativeId = typeof currentRejectId === 'string' ? parseInt(currentRejectId) : currentRejectId;
 
             if (rbac.rejectInitiative(initiativeId, reason)) {
-                showAlert('Success', '❌ Initiative rejected', function () {
+                showAlert('Success', '❌ Action completed successfully.', function () {
                     closeRejectionModal();
                     loadApprovals();
                 });

@@ -98,6 +98,193 @@
             font-weight: 600;
             color: var(--primary);
         }
+
+        /* Under Performer Ranking Section */
+        .under-performer-section {
+            background: linear-gradient(135deg, rgba(248, 113, 113, 0.15) 0%, rgba(239, 68, 68, 0.08) 100%);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            border-radius: 16px;
+            padding: 25px 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 30px rgba(248, 113, 113, 0.15);
+        }
+
+        .under-performer-section .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #f87171;
+            margin-bottom: 20px;
+        }
+
+        .under-performer-section .section-header i {
+            width: 18px;
+            height: 18px;
+        }
+
+        .under-performer-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+        }
+
+        .under-performer-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .under-performer-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(248, 113, 113, 0.25);
+            border-color: rgba(248, 113, 113, 0.4);
+        }
+
+        .under-performer-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .under-performer-card.rank-1::before {
+            background: #ef4444;
+        }
+
+        /* Pulsing red glow animation for rank 1 */
+        @keyframes pulseRed {
+
+            0%,
+            100% {
+                box-shadow: 0 0 8px rgba(239, 68, 68, 0.4), 0 0 20px rgba(239, 68, 68, 0.2);
+                border-color: rgba(239, 68, 68, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 20px rgba(239, 68, 68, 0.7), 0 0 40px rgba(239, 68, 68, 0.4), 0 0 60px rgba(239, 68, 68, 0.2);
+                border-color: rgba(239, 68, 68, 0.8);
+            }
+        }
+
+        .under-performer-card.rank-1 {
+            animation: pulseRed 2s ease-in-out infinite;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(21, 21, 34, 0.95));
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+
+        .under-performer-card.rank-2::before {
+            background: #f87171;
+        }
+
+        .under-performer-card.rank-3::before {
+            background: #fca5a5;
+        }
+
+        .under-performer-card.rank-4::before {
+            background: #fbbf24;
+        }
+
+        .under-performer-card.rank-5::before {
+            background: #fcd34d;
+        }
+
+        .under-performer-card .rank-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .under-performer-card.rank-1 .rank-badge {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .under-performer-card.rank-2 .rank-badge {
+            background: linear-gradient(135deg, #f87171, #ef4444);
+        }
+
+        .under-performer-card.rank-3 .rank-badge {
+            background: linear-gradient(135deg, #fca5a5, #f87171);
+            color: #1f2937;
+        }
+
+        .under-performer-card.rank-4 .rank-badge {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #1f2937;
+        }
+
+        .under-performer-card.rank-5 .rank-badge {
+            background: linear-gradient(135deg, #fcd34d, #fbbf24);
+            color: #1f2937;
+        }
+
+        .under-performer-card .owner-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 85%;
+            line-height: 1.3;
+        }
+
+        .under-performer-card .completion-rate {
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        .under-performer-card.rank-1 .completion-rate {
+            color: #ef4444;
+        }
+
+        .under-performer-card.rank-2 .completion-rate {
+            color: #f87171;
+        }
+
+        .under-performer-card.rank-3 .completion-rate {
+            color: #fca5a5;
+        }
+
+        .under-performer-card.rank-4 .completion-rate {
+            color: #fbbf24;
+        }
+
+        .under-performer-card.rank-5 .completion-rate {
+            color: #fcd34d;
+        }
+
+        .under-performer-card .stat-details {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .under-performer-card .stat-details span {
+            color: #f87171;
+            font-weight: 600;
+        }
     </style>
 </head>
 
@@ -164,6 +351,31 @@
                     Logout</button>
                 <button onclick="closeLogoutModal()"
                     style="padding: 12px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Under Performer Detail Modal -->
+    <div id="underPerformerDetailModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 10000; align-items: center; justify-content: center;">
+        <div
+            style="background: linear-gradient(135deg, rgba(21, 21, 34, 0.98), rgba(26, 31, 46, 0.98)); border-radius: 16px; max-width: 700px; width: 95%; max-height: 85vh; overflow-y: auto; padding: 0; border: 1px solid rgba(248, 113, 113, 0.3); box-shadow: 0 20px 60px rgba(248, 113, 113, 0.3);">
+            <!-- Header -->
+            <div
+                style="padding: 20px 25px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: rgba(21, 21, 34, 0.98); z-index: 1;">
+                <h3 id="underPerformerModalTitle"
+                    style="margin: 0; font-size: 18px; color: white; display: flex; align-items: center; gap: 10px;">
+                    <i data-lucide="alert-circle" style="width: 20px; height: 20px; color: #f87171;"></i>
+                    Under Performer Analysis
+                </h3>
+                <button onclick="closeUnderPerformerModal()"
+                    style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 5px;">
+                    <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+                </button>
+            </div>
+            <!-- Content -->
+            <div id="underPerformerModalContent" style="padding: 25px;">
+                <!-- Content will be injected by JS -->
             </div>
         </div>
     </div>
@@ -333,6 +545,17 @@
         <!-- Top Stats -->
         <div class="stats-grid" id="statsGrid">
             <!-- Injected via JS -->
+        </div>
+
+        <!-- Under Performer Ranking Section -->
+        <div class="under-performer-section fade-in-up" id="underPerformerSection">
+            <div class="section-header">
+                <i data-lucide="trending-down"></i>
+                <span>UNDER PERFORMER RANKING</span>
+            </div>
+            <div class="under-performer-grid" id="underPerformerGrid">
+                <!-- Cards will be injected via JS -->
+            </div>
         </div>
 
         <!-- Row 0: Advanced Analytics (Hidden by default or managed via widget) -->
@@ -1032,6 +1255,66 @@
                 }
             }
 
+            // --- UNDER PERFORMER RANKING CARDS ---
+            // Calculate owner stats
+            let ownerStats = {};
+            initiatives.forEach(i => {
+                const owner = i.owner || 'Unknown';
+                if (!ownerStats[owner]) ownerStats[owner] = { total: 0, done: 0, score: 0 };
+                ownerStats[owner].total++;
+                if (i.status === 'Done') ownerStats[owner].done++;
+            });
+
+            Object.keys(ownerStats).forEach(key => {
+                const s = ownerStats[key];
+                s.score = s.total > 0 ? (s.done / s.total) * 100 : 0;
+            });
+
+            // Sort ascending (lowest first) for under performers
+            const sortedUnderPerformers = Object.entries(ownerStats)
+                .filter(([, s]) => s.total > 0)
+                .sort(([, a], [, b]) => a.score - b.score)
+                .slice(0, 5);
+
+            // Render Under Performer Cards Grid
+            const underPerformerGrid = document.getElementById('underPerformerGrid');
+            if (underPerformerGrid) {
+                let gridHtml = '';
+                if (sortedUnderPerformers.length === 0) {
+                    gridHtml = `<div style="grid-column: span 5; text-align: center; padding: 30px; color: var(--text-muted);">No under performer data available.</div>`;
+                } else {
+                    // Render up to 5 cards
+                    for (let i = 0; i < 5; i++) {
+                        if (sortedUnderPerformers[i]) {
+                            const [name, data] = sortedUnderPerformers[i];
+                            const cleanName = name.replace('Divisi ', '').replace('Sub Divisi ', '');
+                            const pendingCount = data.total - data.done;
+                            gridHtml += `
+                                <div class="under-performer-card rank-${i + 1}" onclick="showUnderPerformerDetailModal('${name.replace(/'/g, "\\'")}')" title="Klik untuk detail">
+                                    <div class="rank-badge">${i + 1}</div>
+                                    <div class="owner-name" title="${cleanName}">${cleanName}</div>
+                                    <div class="completion-rate">${Math.round(data.score)}%</div>
+                                    <div class="stat-details">${data.done}/${data.total} Done • <span>${pendingCount} pending</span></div>
+                                </div>
+                            `;
+                        } else {
+                            // Empty placeholder card for missing data
+                            gridHtml += `
+                                <div class="under-performer-card rank-${i + 1}" style="opacity: 0.3; cursor: default;">
+                                    <div class="rank-badge">${i + 1}</div>
+                                    <div class="owner-name">-</div>
+                                    <div class="completion-rate">-</div>
+                                    <div class="stat-details">No data</div>
+                                </div>
+                            `;
+                        }
+                    }
+                }
+                underPerformerGrid.innerHTML = gridHtml;
+                // Reinitialize Lucide icons for the new content
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+
             // --- 10. OWNER TABLE ---
             renderOwnerTable(initiatives, currentOwners);
 
@@ -1056,6 +1339,461 @@
             }
         }
 
+        // Show Under Performer Detail Modal with Analytics and AI Recommendations
+        function showUnderPerformerDetailModal(ownerName) {
+            const modal = document.getElementById('underPerformerDetailModal');
+            const content = document.getElementById('underPerformerModalContent');
+            const title = document.getElementById('underPerformerModalTitle');
+
+            if (!modal || !content) return;
+
+            // Get owner initiatives
+            const allInits = JSON.parse(localStorage.getItem('initiatives') || '[]');
+            const ownerInits = allInits.filter(i => i.owner === ownerName);
+            if (ownerInits.length === 0) {
+                content.innerHTML = '<div style="text-align: center; padding: 30px; color: var(--text-muted);">No data available for this owner.</div>';
+                modal.style.display = 'flex';
+                return;
+            }
+
+            const cleanName = ownerName.replace('Divisi ', '').replace('Sub Divisi ', '');
+
+            // Calculate statistics
+            const total = ownerInits.length;
+            const done = ownerInits.filter(i => i.status === 'Done').length;
+            const ongoing = ownerInits.filter(i => i.status === 'On Going').length;
+            const hold = ownerInits.filter(i => i.status === 'Hold').length;
+            const notStarted = ownerInits.filter(i => i.status === 'Not Started').length;
+            const completionRate = total > 0 ? Math.round((done / total) * 100) : 0;
+
+            // Budget analysis
+            const totalBudget = ownerInits.reduce((sum, i) => sum + (parseInt(i.budget) || 0), 0);
+            const actualCost = ownerInits.reduce((sum, i) => sum + (parseInt(i.actualCost) || 0), 0);
+            const budgetUsage = totalBudget > 0 ? Math.round((actualCost / totalBudget) * 100) : 0;
+
+            // Overdue activities analysis (only main initiatives, not sub-initiatives)
+            const now = new Date();
+            let overdueCount = 0;
+            ownerInits.forEach(init => {
+                if (init.status !== 'Done' && init.status !== 'Cancelled') {
+                    if (init.dueDate && new Date(init.dueDate) < now) {
+                        overdueCount++;
+                    }
+                }
+            });
+
+            // Calculate Key Activities (sub-initiatives) stats
+            let totalKeyActivities = 0;
+            let incompleteKeyActivities = 0;
+            ownerInits.forEach(init => {
+                if (init.subInitiatives && Array.isArray(init.subInitiatives)) {
+                    totalKeyActivities += init.subInitiatives.length;
+                    incompleteKeyActivities += init.subInitiatives.filter(sub => sub.status !== 'Done').length;
+                }
+            });
+
+            // Calculate average progress
+            const avgProgress = ownerInits.reduce((sum, i) => sum + (parseInt(i.progress) || 0), 0) / total;
+
+            // Generate AI Recommendations
+            let recommendations = [];
+
+            if (completionRate < 30) {
+                recommendations.push({
+                    icon: 'target',
+                    title: 'Tingkatkan Fokus Penyelesaian',
+                    desc: 'Completion rate rendah. Prioritaskan inisiatif yang hampir selesai untuk meningkatkan angka penyelesaian dengan cepat.'
+                });
+            }
+
+            if (overdueCount > 0) {
+                recommendations.push({
+                    icon: 'clock',
+                    title: 'Selesaikan Inisiatif Overdue',
+                    desc: `Terdapat ${overdueCount} item yang melewati deadline. Segera review dan reschedule dengan timeline yang realistis.`
+                });
+            }
+
+            if (hold > 0) {
+                recommendations.push({
+                    icon: 'pause-circle',
+                    title: 'Review Status Hold',
+                    desc: `${hold} inisiatif dalam status Hold. Identifikasi blocker dan tentukan action plan untuk melanjutkan.`
+                });
+            }
+
+            if (notStarted > 1) {
+                recommendations.push({
+                    icon: 'play-circle',
+                    title: 'Mulai Inisiatif Pending',
+                    desc: `${notStarted} inisiatif belum dimulai. Buat kickoff plan dan alokasikan resources yang diperlukan.`
+                });
+            }
+
+            if (budgetUsage > 80 && completionRate < 50) {
+                recommendations.push({
+                    icon: 'wallet',
+                    title: 'Optimasi Penggunaan Budget',
+                    desc: 'Budget usage tinggi dengan completion rate rendah. Review efisiensi pengeluaran dan alokasi resources.'
+                });
+            }
+
+            if (avgProgress < 40 && ongoing > 0) {
+                recommendations.push({
+                    icon: 'trending-up',
+                    title: 'Akselerasi Progress',
+                    desc: 'Rata-rata progress rendah. Pertimbangkan penambahan resources atau penyederhanaan scope.'
+                });
+            }
+
+            if (recommendations.length === 0) {
+                recommendations.push({
+                    icon: 'lightbulb',
+                    title: 'Tingkatkan Kecepatan Eksekusi',
+                    desc: 'Fokus pada penyelesaian inisiatif aktif dan pastikan timeline tercapai.'
+                });
+            }
+
+            // Build HTML content
+            let html = `
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding: 20px; background: linear-gradient(135deg, rgba(248, 113, 113, 0.15), rgba(239, 68, 68, 0.08)); border-radius: 12px; border: 1px solid rgba(248, 113, 113, 0.2);">
+                    <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #ef4444, #dc2626); display: flex; align-items: center; justify-content: center;">
+                        <i data-lucide="user" style="width: 24px; height: 24px; color: white;"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 18px; font-weight: 700; color: white;">${cleanName}</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">Under Performer Analysis</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 28px; font-weight: 800; color: #f87171;">${completionRate}%</div>
+                        <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Completion Rate</div>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 25px;">
+                    <div onclick="window.location.href='projects.html?owner=${encodeURIComponent(ownerName)}'" style="background: rgba(255,255,255,0.05); border-radius: 10px; padding: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 15px rgba(255,255,255,0.1)';" onmouseout="this.style.transform='';this.style.boxShadow='';" title="Klik untuk lihat semua inisiatif">
+                        <div style="font-size: 22px; font-weight: 700; color: white;">${total}</div>
+                        <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Total</div>
+                    </div>
+                    <div onclick="window.location.href='projects.html?owner=${encodeURIComponent(ownerName)}&status=Done'" style="background: rgba(74, 222, 128, 0.1); border-radius: 10px; padding: 15px; text-align: center; border: 1px solid rgba(74, 222, 128, 0.2); cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 15px rgba(74, 222, 128,0.2)';" onmouseout="this.style.transform='';this.style.boxShadow='';" title="Klik untuk lihat inisiatif Done">
+                        <div style="font-size: 22px; font-weight: 700; color: #4ade80;">${done}</div>
+                        <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Done</div>
+                    </div>
+                    <div onclick="window.location.href='projects.html?owner=${encodeURIComponent(ownerName)}&status=On%20Going'" style="background: rgba(59, 130, 246, 0.1); border-radius: 10px; padding: 15px; text-align: center; border: 1px solid rgba(59, 130, 246, 0.2); cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 15px rgba(59, 130, 246,0.2)';" onmouseout="this.style.transform='';this.style.boxShadow='';" title="Klik untuk lihat inisiatif On Going">
+                        <div style="font-size: 22px; font-weight: 700; color: #3b82f6;">${ongoing}</div>
+                        <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">On Going</div>
+                    </div>
+                    <div onclick="showOwnerOverdueInitiatives('${ownerName.replace(/'/g, "\\'")}')" style="background: rgba(248, 113, 113, 0.1); border-radius: 10px; padding: 15px; text-align: center; border: 1px solid rgba(248, 113, 113, 0.2); cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 15px rgba(248, 113, 113,0.2)';" onmouseout="this.style.transform='';this.style.boxShadow='';" title="Klik untuk lihat inisiatif Overdue">
+                        <div style="font-size: 22px; font-weight: 700; color: #f87171;">${overdueCount}</div>
+                        <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Overdue</div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 25px;">
+                    <div style="font-size: 14px; font-weight: 700; color: white; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="bar-chart-2" style="width: 16px; height: 16px; color: #f87171;"></i>
+                        Faktor Penyebab Under Performance
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <!-- Factor 1: Completion Rate - Click to see all initiatives -->
+                        <div onclick="window.location.href='projects.html?owner=${encodeURIComponent(ownerName)}'" style="padding: 12px 15px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #f87171; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(248, 113, 113, 0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'" title="Klik untuk lihat semua inisiatif">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 13px; color: white;">Completion Rate Rendah</span>
+                                <span style="font-size: 13px; font-weight: 600; color: #f87171;">${completionRate}%</span>
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Target minimum: 50% • Klik untuk detail</div>
+                        </div>
+                        ${overdueCount > 0 ? `
+                        <!-- Factor 2: Overdue - Click to see overdue list -->
+                        <div onclick="showOwnerOverdueInitiatives('${ownerName.replace(/'/g, "\\'")}')" style="padding: 12px 15px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #fbbf24; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(251, 191, 36, 0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'" title="Klik untuk lihat daftar overdue">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 13px; color: white;">Inisiatif Overdue</span>
+                                <span style="font-size: 13px; font-weight: 600; color: #fbbf24;">${overdueCount} items</span>
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Melewati deadline • Klik untuk detail</div>
+                        </div>
+                        ` : ''}
+                        ${hold > 0 || notStarted > 0 ? `
+                        <!-- Factor 3: Status Issues - Click to see Hold/Not Started -->
+                        <div onclick="showOwnerPendingInitiatives('${ownerName.replace(/'/g, "\\'")}')" style="padding: 12px 15px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #94a3b8; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(148, 163, 184, 0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'" title="Klik untuk lihat inisiatif tertunda">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 13px; color: white;">Inisiatif Tertunda</span>
+                                <span style="font-size: 13px; font-weight: 600; color: #94a3b8;">${hold + notStarted} items</span>
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Hold: ${hold}, Not Started: ${notStarted} • Klik untuk detail</div>
+                        </div>
+                        ` : ''}
+                        <!-- Budget Usage - Click to see budget breakdown -->
+                        <div onclick="showOwnerBudgetDetails('${ownerName.replace(/'/g, "\\'")}')" style="padding: 12px 15px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #a78bfa; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(167, 139, 250, 0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'" title="Klik untuk lihat detail budget">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 13px; color: white;">Budget Usage</span>
+                                <span style="font-size: 13px; font-weight: 600; color: #a78bfa;">${budgetUsage}%</span>
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Rp ${(totalBudget / 1000000).toFixed(0)}jt budget • Klik untuk detail</div>
+                        </div>
+                        <!-- Key Activities - Click to see key activities list -->
+                        <div onclick="showOwnerKeyActivities('${ownerName.replace(/'/g, "\\'")}')" style="padding: 12px 15px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #38bdf8; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(56, 189, 248, 0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'" title="Klik untuk lihat key activities">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 13px; color: white;">Key Activities Belum Selesai</span>
+                                <span style="font-size: 13px; font-weight: 600; color: #38bdf8;">${incompleteKeyActivities} / ${totalKeyActivities}</span>
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Selesai: ${totalKeyActivities - incompleteKeyActivities} • Klik untuk detail</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1)); border-radius: 12px; padding: 20px; border: 1px solid rgba(139, 92, 246, 0.2);">
+                    <div style="font-size: 14px; font-weight: 700; color: white; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="sparkles" style="width: 16px; height: 16px; color: #a78bfa;"></i>
+                        AI Recommendations
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+            `;
+
+            recommendations.forEach((rec) => {
+                html += `
+                    <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                        <div style="width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3)); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i data-lucide="${rec.icon}" style="width: 16px; height: 16px; color: #a78bfa;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 13px; font-weight: 600; color: white; margin-bottom: 4px;">${rec.title}</div>
+                            <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">${rec.desc}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            title.innerHTML = `
+                <i data-lucide="alert-circle" style="width: 20px; height: 20px; color: #f87171;"></i>
+                Under Performer: ${cleanName}
+            `;
+
+            content.innerHTML = html;
+            modal.style.display = 'flex';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        // Close Under Performer Detail Modal
+        function closeUnderPerformerModal() {
+            const modal = document.getElementById('underPerformerDetailModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function (e) {
+            const modal = document.getElementById('underPerformerDetailModal');
+            if (modal && e.target === modal) {
+                closeUnderPerformerModal();
+            }
+        });
+
+        // Show Overdue Initiatives for specific owner
+        function showOwnerOverdueInitiatives(ownerName) {
+            const content = document.getElementById('underPerformerModalContent');
+            if (!content) return;
+
+            const cleanName = ownerName.replace('Divisi ', '').replace('Sub Divisi ', '');
+
+            // Get overdue initiatives details
+            const allInits = JSON.parse(localStorage.getItem('initiatives') || '[]');
+            const now = new Date();
+            const overdueInits = allInits.filter(i => {
+                if (i.owner !== ownerName) return false;
+                if (i.status === 'Done' || i.status === 'Cancelled') return false;
+                if (i.dueDate && new Date(i.dueDate) < now) return true;
+                return false;
+            });
+
+            let html = `
+                <div style="margin-bottom: 20px;">
+                    <button onclick="showUnderPerformerDetailModal('${ownerName.replace(/'/g, "\\'")}')" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                        <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
+                        Kembali
+                    </button>
+                </div>
+                <div style="font-size: 16px; font-weight: 700; color: white; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <i data-lucide="alert-triangle" style="width: 20px; height: 20px; color: #f87171;"></i>
+                    Inisiatif Overdue - ${cleanName}
+                </div>
+            `;
+
+            if (overdueInits.length === 0) {
+                html += '<div style="text-align: center; padding: 30px; color: var(--text-muted);">Tidak ada inisiatif overdue.</div>';
+            } else {
+                overdueInits.forEach((init) => {
+                    const daysOverdue = Math.ceil((now - new Date(init.dueDate)) / (1000 * 60 * 60 * 24));
+                    html += `
+                        <div onclick="window.location.href='projects.html?search=${encodeURIComponent(init.name)}'" style="padding: 15px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(248, 113, 113, 0.2); margin-bottom: 10px; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(248, 113, 113, 0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                <div style="font-size: 14px; font-weight: 600; color: white; flex: 1;">${init.name}</div>
+                                <div style="font-size: 11px; padding: 3px 8px; border-radius: 4px; background: rgba(248, 113, 113, 0.2); color: #f87171; font-weight: 600;">${daysOverdue} hari</div>
+                            </div>
+                            <div style="display: flex; gap: 15px; font-size: 11px; color: var(--text-muted);">
+                                <span><strong>Due:</strong> ${init.dueDate || '-'}</span>
+                                <span><strong>Status:</strong> ${init.status}</span>
+                                <span><strong>Progress:</strong> ${init.progress || 0}%</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            content.innerHTML = html;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        // Show Pending (Hold/Not Started) Initiatives for specific owner
+        function showOwnerPendingInitiatives(ownerName) {
+            const content = document.getElementById('underPerformerModalContent');
+            if (!content) return;
+
+            const cleanName = ownerName.replace('Divisi ', '').replace('Sub Divisi ', '');
+            const allInits = JSON.parse(localStorage.getItem('initiatives') || '[]');
+            const pendingInits = allInits.filter(i => i.owner === ownerName && (i.status === 'Hold' || i.status === 'Not Started'));
+
+            let html = `
+                <div style="margin-bottom: 20px;">
+                    <button onclick="showUnderPerformerDetailModal('${ownerName.replace(/'/g, "\\'")}')" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                        <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
+                        Kembali
+                    </button>
+                </div>
+                <div style="font-size: 16px; font-weight: 700; color: white; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <i data-lucide="pause-circle" style="width: 20px; height: 20px; color: #94a3b8;"></i>
+                    Inisiatif Tertunda - ${cleanName}
+                </div>
+            `;
+
+            if (pendingInits.length === 0) {
+                html += '<div style="text-align: center; padding: 30px; color: var(--text-muted);">Tidak ada inisiatif tertunda.</div>';
+            } else {
+                pendingInits.forEach((init) => {
+                    const statusColor = init.status === 'Hold' ? '#fbbf24' : '#94a3b8';
+                    html += `
+                        <div onclick="window.location.href='projects.html?search=${encodeURIComponent(init.name)}'" style="padding: 15px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(148, 163, 184, 0.2); margin-bottom: 10px; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(148, 163, 184, 0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                <div style="font-size: 14px; font-weight: 600; color: white; flex: 1;">${init.name}</div>
+                                <div style="font-size: 11px; padding: 3px 8px; border-radius: 4px; background: rgba(148, 163, 184, 0.2); color: ${statusColor}; font-weight: 600;">${init.status}</div>
+                            </div>
+                            <div style="display: flex; gap: 15px; font-size: 11px; color: var(--text-muted);">
+                                <span><strong>Progress:</strong> ${init.progress || 0}%</span>
+                                <span><strong>Start:</strong> ${init.startDate || '-'}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            content.innerHTML = html;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        // Show Budget Details for specific owner
+        function showOwnerBudgetDetails(ownerName) {
+            const content = document.getElementById('underPerformerModalContent');
+            if (!content) return;
+
+            const cleanName = ownerName.replace('Divisi ', '').replace('Sub Divisi ', '');
+            const allInits = JSON.parse(localStorage.getItem('initiatives') || '[]');
+            const ownerInits = allInits.filter(i => i.owner === ownerName);
+
+            let html = `
+                <div style="margin-bottom: 20px;">
+                    <button onclick="showUnderPerformerDetailModal('${ownerName.replace(/'/g, "\\'")}')" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                        <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
+                        Kembali
+                    </button>
+                </div>
+                <div style="font-size: 16px; font-weight: 700; color: white; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <i data-lucide="wallet" style="width: 20px; height: 20px; color: #a78bfa;"></i>
+                    Detail Budget - ${cleanName}
+                </div>
+            `;
+
+            if (ownerInits.length === 0) {
+                html += '<div style="text-align: center; padding: 30px; color: var(--text-muted);">Tidak ada data budget.</div>';
+            } else {
+                ownerInits.forEach((init) => {
+                    const budget = parseInt(init.budget) || 0;
+                    const actual = parseInt(init.actualCost) || 0;
+                    const usage = budget > 0 ? Math.round((actual / budget) * 100) : 0;
+                    const usageColor = usage > 100 ? '#ef4444' : usage > 80 ? '#fbbf24' : '#4ade80';
+                    html += `
+                        <div onclick="window.location.href='projects.html?search=${encodeURIComponent(init.name)}'" style="padding: 15px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(167, 139, 250, 0.2); margin-bottom: 10px; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(167, 139, 250, 0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                <div style="font-size: 14px; font-weight: 600; color: white; flex: 1;">${init.name}</div>
+                                <div style="font-size: 11px; padding: 3px 8px; border-radius: 4px; background: rgba(167, 139, 250, 0.2); color: ${usageColor}; font-weight: 600;">${usage}%</div>
+                            </div>
+                            <div style="display: flex; gap: 15px; font-size: 11px; color: var(--text-muted);">
+                                <span><strong>Budget:</strong> Rp ${(budget / 1000000).toFixed(0)}jt</span>
+                                <span><strong>Terpakai:</strong> Rp ${(actual / 1000000).toFixed(0)}jt</span>
+                                <span><strong>Status:</strong> ${init.status}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            content.innerHTML = html;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        // Show Key Activities for specific owner
+        function showOwnerKeyActivities(ownerName) {
+            const content = document.getElementById('underPerformerModalContent');
+            if (!content) return;
+
+            const cleanName = ownerName.replace('Divisi ', '').replace('Sub Divisi ', '');
+            const allInits = JSON.parse(localStorage.getItem('initiatives') || '[]');
+            const ownerInits = allInits.filter(i => i.owner === ownerName);
+
+            let html = `
+                <div style="margin-bottom: 20px;">
+                    <button onclick="showUnderPerformerDetailModal('${ownerName.replace(/'/g, "\\'")}')" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                        <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
+                        Kembali
+                    </button>
+                </div>
+                <div style="font-size: 16px; font-weight: 700; color: white; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <i data-lucide="list-checks" style="width: 20px; height: 20px; color: #38bdf8;"></i>
+                    Key Activities - ${cleanName}
+                </div>
+            `;
+
+            let hasActivities = false;
+            ownerInits.forEach((init) => {
+                if (init.subInitiatives && init.subInitiatives.length > 0) {
+                    hasActivities = true;
+                    html += `<div style="font-size: 13px; font-weight: 600; color: #38bdf8; margin-bottom: 10px; margin-top: 15px;">${init.name}</div>`;
+                    init.subInitiatives.forEach((sub) => {
+                        const statusColor = sub.status === 'Done' ? '#4ade80' : sub.status === 'On Going' ? '#3b82f6' : '#94a3b8';
+                        const statusBg = sub.status === 'Done' ? 'rgba(74, 222, 128, 0.2)' : sub.status === 'On Going' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(148, 163, 184, 0.2)';
+                        html += `
+                            <div style="padding: 12px 15px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.15); margin-bottom: 8px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="font-size: 13px; color: white; flex: 1;">${sub.name}</div>
+                                    <div style="font-size: 10px; padding: 2px 8px; border-radius: 4px; background: ${statusBg}; color: ${statusColor}; font-weight: 600;">${sub.status || 'Not Started'}</div>
+                                </div>
+                                ${sub.dueDate ? `<div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Due: ${sub.dueDate}</div>` : ''}
+                            </div>
+                        `;
+                    });
+                }
+            });
+
+            if (!hasActivities) {
+                html += '<div style="text-align: center; padding: 30px; color: var(--text-muted);">Tidak ada key activities.</div>';
+            }
+
+            content.innerHTML = html;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
 
         // --- INITIATIVES PROGRESS ANALYSIS (Interactive) ---
         let progressChartInstance = null;

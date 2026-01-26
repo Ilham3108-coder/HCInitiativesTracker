@@ -10,6 +10,9 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/data-service.js"></script>
     <style>
         .projects-header {
             display: flex;
@@ -560,8 +563,15 @@
                             <label
                                 style="display: block; margin-bottom: 8px; font-size: 13px; color: var(--text-muted);">Initiatives
                                 Owner</label>
-                            <input type="text" id="projectOwner" required placeholder="e.g. Strategi & Kebijakan"
-                                style="width: 100%; padding: 12px; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white; font-size: 14px;">
+                            <div id="ownerFieldContainer">
+                                <select id="projectOwnerSelect" required
+                                    style="width: 100%; padding: 12px; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white; font-size: 14px; cursor: pointer; display: none;">
+                                    <option value="" style="background: #1a1a2e; color: white;">Select Owner</option>
+                                </select>
+                                <input type="text" id="projectOwnerInput" required
+                                    placeholder="e.g. Strategi & Kebijakan"
+                                    style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; border-radius: 6px; display: none;">
+                            </div>
                         </div>
                     </div>
 
@@ -805,6 +815,9 @@
     <script src="js/notifications.js"></script>
     <script src="js/theme.js"></script>
     <script src="js/go-system.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/data-service.js"></script>
     <script src="js/projects.js?v=4.6"></script>
     <script src="js/logout.js"></script>
     <script src="js/rbac.js"></script>

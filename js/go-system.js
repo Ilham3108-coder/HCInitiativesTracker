@@ -35,7 +35,12 @@ function approveInitiative(notificationId, initiativeId) {
         initiative.status = 'Not Started'; // Change from Pending Approval to Not Started
         initiative.approvedBy = getCurrentUser().name || 'Administrator';
         initiative.approvedAt = new Date().toISOString();
-        localStorage.setItem('initiatives', JSON.stringify(initiatives));
+        if (window.dataService) {
+            window.dataService.saveLocalData(initiatives);
+            window.dataService.saveInitiative(initiative);
+        } else {
+            localStorage.setItem('initiatives', JSON.stringify(initiatives));
+        }
     }
 
     // Update notification
@@ -70,7 +75,12 @@ function rejectInitiative(notificationId, initiativeId, reason = '') {
         initiative.rejectedBy = getCurrentUser().name || 'Administrator';
         initiative.rejectedAt = new Date().toISOString();
         initiative.rejectionReason = reason;
-        localStorage.setItem('initiatives', JSON.stringify(initiatives));
+        if (window.dataService) {
+            window.dataService.saveLocalData(initiatives);
+            window.dataService.saveInitiative(initiative);
+        } else {
+            localStorage.setItem('initiatives', JSON.stringify(initiatives));
+        }
     }
 
     // Update notification

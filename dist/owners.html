@@ -9,6 +9,65 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Entity Sidebar Styles */
+        .entity-btn {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            gap: 10px;
+        }
+
+        .entity-btn .entity-name {
+            flex: 1;
+            text-align: left;
+        }
+
+        .entity-btn .entity-count {
+            background: rgba(255, 255, 255, 0.1);
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 10px;
+            min-width: 28px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .entity-btn.active .entity-count {
+            background: linear-gradient(135deg, #00eebb, #0088ff);
+            color: #0a0a1a;
+            border-color: transparent;
+            font-weight: 800;
+            box-shadow: 0 0 10px rgba(0, 238, 187, 0.4);
+        }
+
+        .entity-btn.all-entities-btn {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(59, 130, 246, 0.15)) !important;
+            border: 1px solid rgba(251, 191, 36, 0.3) !important;
+            margin-bottom: 15px;
+        }
+
+        .entity-btn.all-entities-btn .entity-count {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.3), rgba(59, 130, 246, 0.2));
+            color: #fbbf24;
+            border-color: rgba(251, 191, 36, 0.4);
+        }
+
+        .entity-btn.all-entities-btn.active {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(59, 130, 246, 0.2)) !important;
+            border-color: rgba(251, 191, 36, 0.5) !important;
+        }
+
+        .entity-btn.all-entities-btn.active .entity-count {
+            background: linear-gradient(135deg, #fbbf24, #3b82f6);
+            color: #0a0a1a;
+            border-color: transparent;
+            font-weight: 800;
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+        }
+    </style>
 
 </head>
 
@@ -87,25 +146,61 @@
             <!-- Left: Entity Selector -->
             <aside class="entity-sidebar">
 
+                <!-- All Entities Button -->
+                <button class="entity-btn all-entities-btn" data-entity="all" onclick="selectEntity('all', this)">
+                    <span class="entity-name">📊 All Entities</span>
+                    <span class="entity-count" id="all-count">0</span>
+                </button>
+
                 <div class="entity-group-title">Holding</div>
-                <button class="entity-btn active" onclick="selectEntity('ptpn3', this)">PT Perkebunan Nusantara III
-                    (Persero)</button>
+                <button class="entity-btn active" data-entity="ptpn3" onclick="selectEntity('ptpn3', this)">
+                    <span class="entity-name">PT Perkebunan Nusantara III (Persero)</span>
+                    <span class="entity-count" id="ptpn3-count">0</span>
+                </button>
 
                 <div class="entity-group-title">Subholding</div>
-                <button class="entity-btn" onclick="selectEntity('ptpn1', this)">PT Perkebunan Nusantara I</button>
-                <button class="entity-btn" onclick="selectEntity('ptpn4', this)">PT Perkebunan Nusantara IV</button>
-                <button class="entity-btn" onclick="selectEntity('sgn', this)">PT Sinergi Gula Nusantara</button>
+                <button class="entity-btn" data-entity="ptpn1" onclick="selectEntity('ptpn1', this)">
+                    <span class="entity-name">PT Perkebunan Nusantara I</span>
+                    <span class="entity-count" id="ptpn1-count">0</span>
+                </button>
+                <button class="entity-btn" data-entity="ptpn4" onclick="selectEntity('ptpn4', this)">
+                    <span class="entity-name">PT Perkebunan Nusantara IV</span>
+                    <span class="entity-count" id="ptpn4-count">0</span>
+                </button>
+                <button class="entity-btn" data-entity="sgn" onclick="selectEntity('sgn', this)">
+                    <span class="entity-name">PT Sinergi Gula Nusantara</span>
+                    <span class="entity-count" id="sgn-count">0</span>
+                </button>
 
                 <div class="entity-group-title">Anak Perusahaan</div>
-                <button class="entity-btn" onclick="selectEntity('lpp', this)">PT LPP Agro Nusantara</button>
-                <button class="entity-btn" onclick="selectEntity('medika', this)">PT Sri Pamela Medika
-                    Nusantara</button>
-                <button class="entity-btn" onclick="selectEntity('rpn', this)">PT Riset Perkebunan Nusantara</button>
-                <button class="entity-btn" onclick="selectEntity('kpbn', this)">PT Kharisma Pemasaran Bersama
-                    Nusantara</button>
-                <button class="entity-btn" onclick="selectEntity('bio', this)">PT Bio Industri Nusantara</button>
-                <button class="entity-btn" onclick="selectEntity('kin', this)">PT Kawasan Industri Nusantara</button>
-                <button class="entity-btn" onclick="selectEntity('ikn', this)">PT Industri Karet Nusantara</button>
+                <button class="entity-btn" data-entity="lpp" onclick="selectEntity('lpp', this)">
+                    <span class="entity-name">PT LPP Agro Nusantara</span>
+                    <span class="entity-count" id="lpp-count">0</span>
+                </button>
+                <button class="entity-btn" data-entity="medika" onclick="selectEntity('medika', this)">
+                    <span class="entity-name">PT Sri Pamela Medika Nusantara</span>
+                    <span class="entity-count" id="medika-count">0</span>
+                </button>
+                <button class="entity-btn" data-entity="rpn" onclick="selectEntity('rpn', this)">
+                    <span class="entity-name">PT Riset Perkebunan Nusantara</span>
+                    <span class="entity-count" id="rpn-count">0</span>
+                </button>
+                <button class="entity-btn" data-entity="kpbn" onclick="selectEntity('kpbn', this)">
+                    <span class="entity-name">PT Kharisma Pemasaran Bersama Nusantara</span>
+                    <span class="entity-count" id="kpbn-count">0</span>
+                </button>
+                <button class="entity-btn" data-entity="bio" onclick="selectEntity('bio', this)">
+                    <span class="entity-name">PT Bio Industri Nusantara</span>
+                    <span class="entity-count" id="bio-count">0</span>
+                </button>
+                <button class="entity-btn" data-entity="kin" onclick="selectEntity('kin', this)">
+                    <span class="entity-name">PT Kawasan Industri Nusantara</span>
+                    <span class="entity-count" id="kin-count">0</span>
+                </button>
+                <button class="entity-btn" data-entity="ikn" onclick="selectEntity('ikn', this)">
+                    <span class="entity-name">PT Industri Karet Nusantara</span>
+                    <span class="entity-count" id="ikn-count">0</span>
+                </button>
 
             </aside>
 
@@ -251,6 +346,42 @@
         </div>
     </div>
 
+    <!-- Delete Owner Confirmation Modal -->
+    <div id="deleteOwnerModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 2010; align-items: center; justify-content: center;">
+        <div
+            style="background: linear-gradient(135deg, rgba(21, 21, 34, 0.95), rgba(26, 31, 46, 0.95)); border-radius: 16px; max-width: 450px; width: 90%; padding: 30px; border: 1px solid rgba(255, 0, 85, 0.3); box-shadow: 0 20px 60px rgba(255, 0, 85, 0.3);">
+
+            <div
+                style="width: 60px; height: 60px; margin: 0 auto 20px; background: rgba(248, 113, 113, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #f87171;">
+                <i data-lucide="trash-2" style="width: 28px; height: 28px; color: #f87171;"></i>
+            </div>
+
+            <h3 style="margin: 0 0 10px 0; font-size: 20px; color: white; text-align: center;">Hapus Owner</h3>
+            <p id="deleteOwnerMessage"
+                style="margin: 0 0 20px 0; color: var(--text-muted); text-align: center; font-size: 14px;"></p>
+
+            <div
+                style="background: rgba(255, 0, 85, 0.1); border: 1px solid rgba(255, 0, 85, 0.2); border-radius: 8px; padding: 12px; margin-bottom: 25px;">
+                <div style="display: flex; align-items: center; gap: 8px; color: #ff6b6b; font-size: 12px;">
+                    <i data-lucide="alert-triangle" style="width: 16px; height: 16px;"></i>
+                    <span><strong>Peringatan:</strong> Owner hanya dapat dihapus jika tidak memiliki initiatives
+                        terkait.</span>
+                </div>
+            </div>
+
+            <input type="hidden" id="deleteOwnerName">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button onclick="closeDeleteOwnerModal()"
+                    style="padding: 12px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">Cancel</button>
+                <button onclick="executeDeleteOwner()"
+                    style="padding: 12px; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">Hapus
+                    Owner</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/entity-filter.js"></script>
     <script src="js/rbac.js"></script>
     <script src="js/data.js"></script>
@@ -329,16 +460,84 @@
             }
         }
 
+        // Function to calculate and update entity OWNER counts (not initiatives)
+        function updateEntityCounts() {
+            // Calculate unique owners per entity
+            const entityIds = Object.keys(ENTITY_NAMES);
+            let allOwners = new Set();
+
+            entityIds.forEach(entityId => {
+                // Get unique owners for this entity
+                const entityInitiatives = initiatives.filter(i => (i.entity || 'ptpn3') === entityId);
+                const uniqueOwners = [...new Set(entityInitiatives.map(i => i.owner).filter(o => o && o.trim() !== ''))];
+
+                // Also include custom owners from localStorage
+                let customOwners = [];
+                try {
+                    const stored = localStorage.getItem('custom_owners');
+                    if (stored) {
+                        const allCustom = JSON.parse(stored);
+                        customOwners = allCustom[entityId] || [];
+                    }
+                } catch (e) { }
+
+                // Merge unique owners
+                const mergedOwners = [...new Set([...uniqueOwners, ...customOwners])];
+
+                // Filter out deleted owners
+                let deletedOwners = [];
+                try {
+                    const storedDeleted = localStorage.getItem('deleted_owners');
+                    if (storedDeleted) {
+                        deletedOwners = JSON.parse(storedDeleted);
+                    }
+                } catch (e) { }
+                const filteredOwners = mergedOwners.filter(o => !deletedOwners.includes(o));
+
+                const countEl = document.getElementById(`${entityId}-count`);
+                if (countEl) countEl.textContent = filteredOwners.length;
+
+                // Add to all owners set
+                filteredOwners.forEach(o => allOwners.add(o));
+            });
+
+            // Update All count (total unique owners across all entities)
+            const allCountEl = document.getElementById('all-count');
+            if (allCountEl) allCountEl.textContent = allOwners.size;
+        }
+
         function selectEntity(entityId, btnElement) {
             currentSelectedEntity = entityId;
 
             // Update Title
-            const entityName = ENTITY_NAMES[entityId] || 'Entity';
+            const entityName = entityId === 'all' ? 'All Entities' : (ENTITY_NAMES[entityId] || 'Entity');
             document.getElementById('selectedEntityTitle').innerText = entityName;
 
             // Update Active State
             document.querySelectorAll('.entity-btn').forEach(b => b.classList.remove('active'));
             if (btnElement) btnElement.classList.add('active');
+
+            // Update entity counts
+            updateEntityCounts();
+
+            // Handle "All Entities" selection
+            if (entityId === 'all') {
+                // Get all unique owners from all initiatives
+                let allOwners = [...new Set(initiatives.map(i => i.owner).filter(o => o && o.trim() !== ''))].sort();
+
+                // Filter out deleted owners
+                let deletedOwners = [];
+                try {
+                    const storedDeleted = localStorage.getItem('deleted_owners');
+                    if (storedDeleted) {
+                        deletedOwners = JSON.parse(storedDeleted);
+                    }
+                } catch (e) { }
+                allOwners = allOwners.filter(o => !deletedOwners.includes(o));
+
+                renderOwners(allOwners);
+                return;
+            }
 
             // --- INTEGRATION LOGIC START ---
             // Get all initiatives for the selected entity
@@ -403,7 +602,9 @@
                 card.innerHTML = `
                     <div style="display:flex; justify-content:space-between; align-items:start;">
                         <div class="owner-name">${owner.replace('Sub Divisi ', '')}</div>
-                        <i data-lucide="briefcase" style="color: var(--primary); width: 20px;"></i>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="trash-2" onclick="event.stopPropagation(); confirmDeleteOwner('${owner.replace(/'/g, "\\'")}')" style="color: #f87171; width: 16px; height: 16px; cursor: pointer; opacity: 0.6; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" title="Hapus Owner"></i>
+                        </div>
                     </div>
                     
                     <!-- Progress Bar -->
@@ -445,6 +646,71 @@
 
         function goToInsertInitiative() {
             openModal();
+        }
+
+        // Delete Owner Functions
+        function confirmDeleteOwner(ownerName) {
+            document.getElementById('deleteOwnerName').value = ownerName;
+            document.getElementById('deleteOwnerMessage').innerHTML = `Anda yakin ingin menghapus owner "<strong>${ownerName}</strong>"?`;
+
+            document.getElementById('deleteOwnerModal').style.display = 'flex';
+            lucide.createIcons();
+        }
+
+        function closeDeleteOwnerModal() {
+            document.getElementById('deleteOwnerModal').style.display = 'none';
+        }
+
+        function executeDeleteOwner() {
+            const ownerName = document.getElementById('deleteOwnerName').value;
+
+            // Check if owner has initiatives - don't allow deletion
+            const ownerInitiatives = initiatives.filter(i => i.owner === ownerName);
+            if (ownerInitiatives.length > 0) {
+                alert(`Tidak dapat menghapus owner "${ownerName}" karena masih memiliki ${ownerInitiatives.length} initiatives terkait. Hapus atau pindahkan initiatives terlebih dahulu.`);
+                closeDeleteOwnerModal();
+                return;
+            }
+
+            try {
+                // Remove from custom_owners in localStorage
+                const stored = localStorage.getItem('custom_owners');
+                if (stored) {
+                    const allCustom = JSON.parse(stored);
+
+                    // Remove owner from all entities
+                    Object.keys(allCustom).forEach(entityId => {
+                        if (allCustom[entityId] && allCustom[entityId].includes(ownerName)) {
+                            allCustom[entityId] = allCustom[entityId].filter(o => o !== ownerName);
+                        }
+                    });
+
+                    localStorage.setItem('custom_owners', JSON.stringify(allCustom));
+                }
+
+                // ADD to deleted_owners blacklist (to exclude from OWNERS_BY_ENTITY and other sources)
+                let deletedOwners = [];
+                try {
+                    const storedDeleted = localStorage.getItem('deleted_owners');
+                    if (storedDeleted) {
+                        deletedOwners = JSON.parse(storedDeleted);
+                    }
+                } catch (e) { }
+
+                if (!deletedOwners.includes(ownerName)) {
+                    deletedOwners.push(ownerName);
+                    localStorage.setItem('deleted_owners', JSON.stringify(deletedOwners));
+                }
+
+                closeDeleteOwnerModal();
+                alert(`Owner "${ownerName}" berhasil dihapus!`);
+
+                // Refresh current view
+                selectEntity(currentSelectedEntity, document.querySelector('.entity-btn.active'));
+            } catch (err) {
+                console.error('Error deleting owner:', err);
+                alert('Gagal menghapus owner.');
+            }
         }
 
 

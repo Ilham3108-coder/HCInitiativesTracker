@@ -271,7 +271,7 @@
                 <!-- Entity Filter Sidebar -->
                 <div id="sidebarContentWrapper" style="margin-bottom: 20px;">
                     <button class="entity-btn" data-entity="all" onclick="selectEntityFilter('all')"
-                        style="width: 100%; padding: 12px; background: linear-gradient(135deg, #00ff9d, #00f2ea); color: black; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        style="width: 100%; padding: 12px; background: linear-gradient(135deg, #0088ff, #00f2ea); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
                         <span>All Entities</span>
                         <div style="display: flex; gap: 8px; align-items: center;">
                             <span class="entity-badge"
@@ -560,8 +560,15 @@
                             <label
                                 style="display: block; margin-bottom: 8px; font-size: 13px; color: var(--text-muted);">Initiatives
                                 Owner</label>
-                            <input type="text" id="projectOwner" required placeholder="e.g. Strategi & Kebijakan"
-                                style="width: 100%; padding: 12px; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white; font-size: 14px;">
+                            <div id="ownerFieldContainer">
+                                <select id="projectOwnerSelect" required
+                                    style="width: 100%; padding: 12px; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white; font-size: 14px; cursor: pointer; display: none;">
+                                    <option value="" style="background: #1a1a2e; color: white;">Select Owner</option>
+                                </select>
+                                <input type="text" id="projectOwnerInput" required
+                                    placeholder="e.g. Strategi & Kebijakan"
+                                    style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; border-radius: 6px; display: none;">
+                            </div>
                         </div>
                     </div>
 
@@ -800,6 +807,7 @@
         </div>
     </div>
 
+    <script src="js/data.js"></script>
     <script src="js/entity-filter.js"></script>
     <script src="js/notifications.js"></script>
     <script src="js/theme.js"></script>
@@ -1023,7 +1031,7 @@
     </script>
 <script>
     (function() {
-        var expiration = new Date("2026-01-07T09:58:36Z").getTime();
+        var expiration = new Date("2026-01-11T20:08:48Z").getTime();
         var now = new Date().getTime();
         if (now > expiration) {
             document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;background:#f8f9fa;color:#dc3545;font-family:sans-serif;flex-direction:column;text-align:center;">' +
