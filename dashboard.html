@@ -2238,7 +2238,8 @@
         // Helper to normalize owner names
         function cleanOwnerName(name) {
             if (!name) return 'Unknown';
-            return name.replace('Divisi ', '').replace('Sub Divisi ', '').trim();
+            // Show full name, do not remove Divisi/Sub Divisi as per user request
+            return name.trim();
         }
 
         // --- DATA SYNC LOGIC with CLOUD SUPPORT ---
@@ -3014,15 +3015,15 @@
 
             // Entity Name Mapping
             const entityNameMapping = {
-                'ptpn1': 'PT Perkebunan Nusantara 1',
-                'ptpn3': 'PT Perkebunan Nusantara 3',
-                'ptpn4': 'PT Perkebunan Nusantara 4',
-                'sgn': 'Sinergi Gula Nusantara',
-                'kin': 'Kawasan Industri Nusantara',
-                'lpp': 'LPP Agro Nusantara',
+                'ptpn1': 'PT Perkebunan Nusantara I (Persero)',
+                'ptpn3': 'PT Perkebunan Nusantara III (Persero)',
+                'ptpn4': 'PT Perkebunan Nusantara IV (Persero)',
+                'sgn': 'PT Sinergi Gula Nusantara',
+                'kin': 'PT Kawasan Industri Nusantara',
+                'lpp': 'PT LPP Agro Nusantara',
                 'medika': 'PT Sri Pamela Medika Nusantara',
-                'rpn': 'Riset Perkebunan Nusantara',
-                'nusakita': 'Nusa Kita',
+                'rpn': 'PT Riset Perkebunan Nusantara',
+                'nusakita': 'PT Nusa Kita',
                 'bio': 'PT Bio Industri Nusantara',
                 'kpbn': 'PT Kharisma Pemasaran Bersama Nusantara',
                 'ikn': 'PT Industri Karet Nusantara'
@@ -3102,7 +3103,8 @@
                 // Owner Stats (for insight card - based on owner field)
                 const ownerRaw = i.owner || 'Unknown';
                 const owner = cleanOwnerName(ownerRaw); // Normalize key
-                if (!ownerStats[owner]) ownerStats[owner] = { total: 0, done: 0, score: 0 };
+                // Store entity for card display
+                if (!ownerStats[owner]) ownerStats[owner] = { total: 0, done: 0, score: 0, entity: i.entity };
                 ownerStats[owner].total++;
                 if (i.status === 'Done') ownerStats[owner].done++;
 
@@ -3225,11 +3227,14 @@
                     for (let i = 0; i < 5; i++) {
                         if (sortedOwners[i]) {
                             const [name, data] = sortedOwners[i];
-                            const cleanName = name.replace('Divisi ', '').replace('Sub Divisi ', '');
+                            const cleanName = name; // Full name
                             const pendingCount = data.total - data.done;
+                            const entityLabel = data.entity ? (entityNameMapping[data.entity] || data.entity) : '';
+
                             topGridHtml += `
                                 <div class="top-performer-card rank-${i + 1}" onclick="showTopPerformerDetailModal(decodeURIComponent('${encodeURIComponent(name)}'))" title="Klik untuk detail">
                                     <div class="rank-badge">${i + 1}</div>
+                                    <div style="font-size: 10px; color: rgba(255,255,255,0.6); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px;">${entityLabel}</div>
                                     <div class="owner-name" title="${cleanName}">${cleanName}</div>
                                     <div class="completion-rate">${Math.round(data.score)}%</div>
                                     <div class="stat-details">${data.done}/${data.total} Done • <span>${pendingCount} pending</span></div>
@@ -3303,11 +3308,14 @@
                     for (let i = 0; i < 5; i++) {
                         if (sortedUnderPerformers[i]) {
                             const [name, data] = sortedUnderPerformers[i];
-                            const cleanName = name.replace('Divisi ', '').replace('Sub Divisi ', '');
+                            const cleanName = name; // Full name
                             const pendingCount = data.total - data.done;
+                            const entityLabel = data.entity ? (entityNameMapping[data.entity] || data.entity) : '';
+
                             gridHtml += `
                                 <div class="under-performer-card rank-${i + 1}" onclick="showUnderPerformerDetailModal(decodeURIComponent('${encodeURIComponent(name)}'))" title="Klik untuk detail">
                                     <div class="rank-badge">${i + 1}</div>
+                                    <div style="font-size: 10px; color: rgba(255,255,255,0.6); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px;">${entityLabel}</div>
                                     <div class="owner-name" title="${cleanName}">${cleanName}</div>
                                     <div class="completion-rate">${Math.round(data.score)}%</div>
                                     <div class="stat-details">${data.done}/${data.total} Done • <span>${pendingCount} pending</span></div>
@@ -4837,11 +4845,11 @@
                     </div>
                 </div>
                 
-                <!-- Achievement Highlights -->
-                <div style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.1)); border-radius: 12px; padding: 20px; border: 1px solid rgba(251, 191, 36, 0.2);">
+                <!-- AI Performance Insights -->
+                <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1)); border-radius: 12px; padding: 20px; border: 1px solid rgba(139, 92, 246, 0.2);">
                     <div style="font-size: 14px; font-weight: 700; color: white; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-                        <i data-lucide="trophy" style="width: 16px; height: 16px; color: #fbbf24;"></i>
-                        Achievement Highlights
+                        <i data-lucide="sparkles" style="width: 16px; height: 16px; color: #a78bfa;"></i>
+                        AI Performance Insights
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
             `;
