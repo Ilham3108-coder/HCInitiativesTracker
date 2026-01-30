@@ -2221,15 +2221,15 @@
         // --- DATA SYNC LOGIC ---
         // Global Entity Mapping
         const entityNameMapping = {
-            'ptpn1': 'PT Perkebunan Nusantara 1',
-            'ptpn3': 'PT Perkebunan Nusantara 3',
-            'ptpn4': 'PT Perkebunan Nusantara 4',
-            'sgn': 'Sinergi Gula Nusantara',
-            'kin': 'Kawasan Industri Nusantara',
-            'lpp': 'LPP Agro Nusantara',
+            'ptpn1': 'PT Perkebunan Nusantara I',
+            'ptpn3': 'PT Perkebunan Nusantara III (Persero)',
+            'ptpn4': 'PT Perkebunan Nusantara IV',
+            'sgn': 'PT Sinergi Gula Nusantara',
+            'kin': 'PT Kawasan Industri Nusantara',
+            'lpp': 'PT LPP Agro Nusantara',
             'medika': 'PT Sri Pamela Medika Nusantara',
-            'rpn': 'Riset Perkebunan Nusantara',
-            'nusakita': 'Nusa Kita',
+            'rpn': 'PT Riset Perkebunan Nusantara',
+            'nusakita': 'PT Nusa Kita',
             'bio': 'PT Bio Industri Nusantara',
             'kpbn': 'PT Kharisma Pemasaran Bersama Nusantara',
             'ikn': 'PT Industri Karet Nusantara'
@@ -3013,11 +3013,14 @@
             const insightBudgetEl = document.getElementById('insightBudgetEff');
             const insightTopEl = document.getElementById('insightTopPerformer');
 
-            // Entity Name Mapping
-            const entityNameMapping = {
-                'ptpn1': 'PT Perkebunan Nusantara I (Persero)',
+            // Entity Name Mapping - Use Global ENTITIES if available, or fallback
+            // User Request: Only PTPN III has (Persero), others do not.
+            // Global ENTITIES in js/data.js should already have this.
+            // If we are strictly using the structure from the sidebar, we trust ENTITIES.
+            const entityMap = typeof ENTITIES !== 'undefined' ? ENTITIES : {
+                'ptpn1': 'PT Perkebunan Nusantara I',
                 'ptpn3': 'PT Perkebunan Nusantara III (Persero)',
-                'ptpn4': 'PT Perkebunan Nusantara IV (Persero)',
+                'ptpn4': 'PT Perkebunan Nusantara IV',
                 'sgn': 'PT Sinergi Gula Nusantara',
                 'kin': 'PT Kawasan Industri Nusantara',
                 'lpp': 'PT LPP Agro Nusantara',
@@ -3142,7 +3145,7 @@
                 .slice(0, 5);
 
             const topEntityRaw = sortedEntities.length > 0 ? sortedEntities[0][0] : '-';
-            const topEntityName = entityNameMapping[topEntityRaw] || topEntityRaw;
+            const topEntityName = entityMap[topEntityRaw] || topEntityRaw;
 
             // --- UPDATE UI STATS ---
             if (insightCompletionEl) insightCompletionEl.innerText = completionRate + '%';
@@ -3202,7 +3205,7 @@
                 if (sortedEntities.length === 0) topHtml += `<div style="font-size:11px; color:#94a3b8;">No data available.</div>`;
                 else {
                     sortedEntities.forEach(([name, s], idx) => {
-                        const clean = (entityNameMapping[name] || name).substring(0, 25);
+                        const clean = (entityMap[name] || name).substring(0, 25);
                         const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '•';
                         topHtml += `
                             <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:3px; align-items:center;">
@@ -3229,12 +3232,12 @@
                             const [name, data] = sortedOwners[i];
                             const cleanName = name; // Full name
                             const pendingCount = data.total - data.done;
-                            const entityLabel = data.entity ? (entityNameMapping[data.entity] || data.entity) : '';
+                            const entityLabel = data.entity ? (entityMap[data.entity] || data.entity) : '';
 
                             topGridHtml += `
                                 <div class="top-performer-card rank-${i + 1}" onclick="showTopPerformerDetailModal(decodeURIComponent('${encodeURIComponent(name)}'))" title="Klik untuk detail">
                                     <div class="rank-badge">${i + 1}</div>
-                                    <div style="font-size: 10px; color: rgba(255,255,255,0.6); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px;">${entityLabel}</div>
+                                    <div style="font-size: 9px; color: rgba(255,255,255,0.6); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px; padding-right: 25px;">${entityLabel}</div>
                                     <div class="owner-name" title="${cleanName}">${cleanName}</div>
                                     <div class="completion-rate">${Math.round(data.score)}%</div>
                                     <div class="stat-details">${data.done}/${data.total} Done • <span>${pendingCount} pending</span></div>
@@ -3264,7 +3267,7 @@
                 .slice(0, 5);
 
             const underPerformerNameEntity = sortedUnderPerformersEntity.length > 0
-                ? (entityNameMapping[sortedUnderPerformersEntity[0][0]] || sortedUnderPerformersEntity[0][0])
+                ? (entityMap[sortedUnderPerformersEntity[0][0]] || sortedUnderPerformersEntity[0][0])
                 : '-';
 
             // Update Under Performer UI (entity-based)
@@ -3278,7 +3281,7 @@
                 if (sortedUnderPerformersEntity.length === 0) underHtml += `<div style="font-size:11px; color:#94a3b8;">No data available.</div>`;
                 else {
                     sortedUnderPerformersEntity.forEach(([name, s], idx) => {
-                        const clean = (entityNameMapping[name] || name).substring(0, 25);
+                        const clean = (entityMap[name] || name).substring(0, 25);
                         const icon = idx === 0 ? '⚠️' : idx === 1 ? '📉' : idx === 2 ? '📊' : '•';
                         underHtml += `
                             <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:3px; align-items:center;">
@@ -3310,12 +3313,12 @@
                             const [name, data] = sortedUnderPerformers[i];
                             const cleanName = name; // Full name
                             const pendingCount = data.total - data.done;
-                            const entityLabel = data.entity ? (entityNameMapping[data.entity] || data.entity) : '';
+                            const entityLabel = data.entity ? (entityMap[data.entity] || data.entity) : '';
 
                             gridHtml += `
                                 <div class="under-performer-card rank-${i + 1}" onclick="showUnderPerformerDetailModal(decodeURIComponent('${encodeURIComponent(name)}'))" title="Klik untuk detail">
                                     <div class="rank-badge">${i + 1}</div>
-                                    <div style="font-size: 10px; color: rgba(255,255,255,0.6); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px;">${entityLabel}</div>
+                                    <div style="font-size: 9px; color: rgba(255,255,255,0.6); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px; padding-right: 25px;">${entityLabel}</div>
                                     <div class="owner-name" title="${cleanName}">${cleanName}</div>
                                     <div class="completion-rate">${Math.round(data.score)}%</div>
                                     <div class="stat-details">${data.done}/${data.total} Done • <span>${pendingCount} pending</span></div>
@@ -4395,6 +4398,7 @@
             const modal = document.getElementById('underPerformerDetailModal');
             const content = document.getElementById('underPerformerModalContent');
             const title = document.getElementById('underPerformerModalTitle');
+            const ownerName = name; // Fix: Define ownerName for use in template literals
 
             if (!modal || !content) return;
 
@@ -4448,11 +4452,14 @@
             });
             // Calculate Key Activities (sub-initiatives) stats
             let totalKeyActivities = 0;
-            let incompleteKeyActivities = 0;
+            let completedKeyActivities = 0;
             targetInits.forEach(init => {
                 if (init.subInitiatives && Array.isArray(init.subInitiatives)) {
                     totalKeyActivities += init.subInitiatives.length;
-                    incompleteKeyActivities += init.subInitiatives.filter(sub => sub.status !== 'Done').length;
+                    completedKeyActivities += init.subInitiatives.filter(sub => {
+                        const progress = parseInt(sub.progress) || 0;
+                        return sub.status === 'Done' || sub.status === 'Completed' || progress === 100;
+                    }).length;
                 }
             });
 
@@ -4580,31 +4587,22 @@
                             <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Melewati deadline • Klik untuk detail</div>
                         </div>
                         ` : ''}
-                        ${hold > 0 || notStarted > 0 ? `
-                        <!-- Factor 3: Status Issues - Click to see Hold/Not Started -->
-                        <div onclick="showOwnerPendingInitiatives('${ownerName.replace(/'/g, "\\'")}')" style="padding: 12px 15px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #94a3b8; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(148, 163, 184, 0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'" title="Klik untuk lihat inisiatif tertunda">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-size: 13px; color: white;">Inisiatif Tertunda</span>
-                                <span style="font-size: 13px; font-weight: 600; color: #94a3b8;">${hold + notStarted} items</span>
-                            </div>
-                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Hold: ${hold}, Not Started: ${notStarted} • Klik untuk detail</div>
-                        </div>
-                        ` : ''}
+
                         <!-- Budget Usage - Click to see budget breakdown -->
-                        <div onclick="showOwnerBudgetDetails('${ownerName.replace(/'/g, "\\'")}')" style="padding: 12px 15px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #a78bfa; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(167, 139, 250, 0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'" title="Klik untuk lihat detail budget">
+                        <div onclick="showOwnerBudgetDetails(decodeURIComponent('${encodeURIComponent(ownerName)}'))" style="padding: 12px 15px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #a78bfa; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(167, 139, 250, 0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'" title="Klik untuk lihat detail budget">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <span style="font-size: 13px; color: white;">Budget Usage</span>
                                 <span style="font-size: 13px; font-weight: 600; color: #a78bfa;">${budgetUsage}%</span>
                             </div>
-                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Rp ${(totalBudget / 1000000).toFixed(0)}jt budget • Klik untuk detail</div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Rp ${totalBudget.toLocaleString('id-ID')} • Klik untuk detail</div>
                         </div>
                         <!-- Key Activities - Click to see key activities list -->
-                        <div onclick="showOwnerKeyActivities('${ownerName.replace(/'/g, "\\'")}')" style="padding: 12px 15px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #38bdf8; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(56, 189, 248, 0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'" title="Klik untuk lihat key activities">
+                        <div onclick="showOwnerKeyActivities(decodeURIComponent('${encodeURIComponent(ownerName)}'))" style="padding: 12px 15px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #38bdf8; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(56, 189, 248, 0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'" title="Klik untuk lihat key activities">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-size: 13px; color: white;">Key Activities Belum Selesai</span>
-                                <span style="font-size: 13px; font-weight: 600; color: #38bdf8;">${incompleteKeyActivities} / ${totalKeyActivities}</span>
+                                <span style="font-size: 13px; color: white;">Key Activities</span>
+                                <span style="font-size: 13px; font-weight: 600; color: #38bdf8;">${completedKeyActivities} / ${totalKeyActivities}</span>
                             </div>
-                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Selesai: ${totalKeyActivities - incompleteKeyActivities} • Klik untuk detail</div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Selesai: ${completedKeyActivities} dari ${totalKeyActivities} • Klik untuk detail</div>
                         </div>
                     </div>
                 </div>
@@ -4655,12 +4653,61 @@
         }
 
         // Show Top Performer Detail Modal with Analytics
+        // Global Router for Top Detail Clicks
+        window.handleTopDetailsClick = function (type, encodedName) {
+            try {
+                // Replace %27 back to ' if needed, though decodeURIComponent handles standard encoding
+                const ownerName = decodeURIComponent(encodedName);
+                console.log('Clicked Top Detail:', type, ownerName);
+
+                if (type === 'completed') {
+                    console.log('Checking showOwnerCompletedInitiatives:', typeof showOwnerCompletedInitiatives);
+                    if (typeof showOwnerCompletedInitiatives === 'function') {
+                        try {
+                            showOwnerCompletedInitiatives(ownerName);
+                            console.log('showOwnerCompletedInitiatives executed successfully');
+                        } catch (innerErr) {
+                            console.error('Error inside showOwnerCompletedInitiatives:', innerErr);
+                        }
+                    }
+                    else console.error('showOwnerCompletedInitiatives not defined');
+                } else if (type === 'budget') {
+                    console.log('Checking showOwnerBudgetDetails:', typeof showOwnerBudgetDetails);
+                    if (typeof showOwnerBudgetDetails === 'function') {
+                        try {
+                            showOwnerBudgetDetails(ownerName);
+                            console.log('showOwnerBudgetDetails executed successfully');
+                        } catch (innerErr) {
+                            console.error('Error inside showOwnerBudgetDetails:', innerErr);
+                        }
+                    }
+                    else console.error('showOwnerBudgetDetails not defined');
+                } else if (type === 'key_activities') {
+                    console.log('Checking showOwnerKeyActivities:', typeof showOwnerKeyActivities);
+                    if (typeof showOwnerKeyActivities === 'function') {
+                        try {
+                            showOwnerKeyActivities(ownerName);
+                            console.log('showOwnerKeyActivities executed successfully');
+                        } catch (innerErr) {
+                            console.error('Error inside showOwnerKeyActivities:', innerErr);
+                        }
+                    }
+                    else console.error('showOwnerKeyActivities not defined');
+                }
+            } catch (e) {
+                console.error('Error in handleTopDetailsClick:', e);
+                alert('An error occurred while opening details. Please try again.');
+            }
+        };
+
         function showTopPerformerDetailModal(name) {
             const modal = document.getElementById('topPerformerDetailModal');
             const content = document.getElementById('topPerformerModalContent');
             const title = document.getElementById('topPerformerModalTitle');
 
             if (!modal || !content) return;
+
+            const ownerName = name; // Define ownerName for use in onclick handlers
 
             // Try grouping by Entity first, then Owner (Using FILTERED initiatives)
             let targetInits = initiatives.filter(i => i.entity === name);
@@ -4717,7 +4764,10 @@
             targetInits.forEach(init => {
                 if (init.subInitiatives && Array.isArray(init.subInitiatives)) {
                     totalKeyActivities += init.subInitiatives.length;
-                    completedKeyActivities += init.subInitiatives.filter(sub => sub.status === 'Done').length;
+                    completedKeyActivities += init.subInitiatives.filter(sub => {
+                        const progress = parseInt(sub.progress) || 0;
+                        return sub.status === 'Done' || sub.status === 'Completed' || progress === 100;
+                    }).length;
                 }
             });
 
@@ -4819,28 +4869,28 @@
                     <!-- Performance Metrics -->
                     <div style="display: flex; flex-direction: column; gap: 10px;">
                         <!-- Completed Initiatives -->
-                        <div style="padding: 12px 15px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #4ade80;">
+                        <div onclick="window.handleTopDetailsClick('completed', '${encodeURIComponent(ownerName).replace(/'/g, "%27")}')" style="position: relative; z-index: 10; padding: 12px 15px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #4ade80; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(74, 222, 128, 0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'" title="Klik untuk lihat inisiatif selesai">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <span style="font-size: 13px; color: white;">Initiatives Selesai</span>
                                 <span style="font-size: 13px; font-weight: 600; color: #4ade80;">${done} / ${total}</span>
                             </div>
-                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Tingkat penyelesaian tinggi</div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Tingkat penyelesaian tinggi • Klik untuk detail</div>
                         </div>
                         <!-- Budget Usage -->
-                        <div style="padding: 12px 15px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #a78bfa;">
+                        <div onclick="window.handleTopDetailsClick('budget', '${encodeURIComponent(ownerName).replace(/'/g, "%27")}')" style="position: relative; z-index: 10; padding: 12px 15px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #a78bfa; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(167, 139, 250, 0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'" title="Klik untuk lihat detail budget">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <span style="font-size: 13px; color: white;">Budget Usage</span>
                                 <span style="font-size: 13px; font-weight: 600; color: #a78bfa;">${budgetUsage}%</span>
                             </div>
-                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Rp ${(totalBudget / 1000000).toFixed(0)}jt budget</div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Rp ${totalBudget.toLocaleString('id-ID')} • Klik untuk detail</div>
                         </div>
                         <!-- Key Activities -->
-                        <div style="padding: 12px 15px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #38bdf8;">
+                        <div onclick="window.handleTopDetailsClick('key_activities', '${encodeURIComponent(ownerName).replace(/'/g, "%27")}')" style="position: relative; z-index: 10; padding: 12px 15px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #38bdf8; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(56, 189, 248, 0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'" title="Klik untuk lihat key activities">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <span style="font-size: 13px; color: white;">Key Activities Selesai</span>
                                 <span style="font-size: 13px; font-weight: 600; color: #38bdf8;">${completedKeyActivities} / ${totalKeyActivities}</span>
                             </div>
-                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Progress key activities baik</div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Progress key activities baik • Klik untuk detail</div>
                         </div>
                     </div>
                 </div>
@@ -4884,6 +4934,171 @@
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
+
+
+        // Show Budget Details for specific owner (Dynamic Modal)
+        function showOwnerBudgetDetails(ownerName) {
+            console.log('showOwnerBudgetDetails called with:', ownerName);
+
+            // Remove existing modal if any
+            const existingModal = document.getElementById('dynamicBudgetModal');
+            if (existingModal) existingModal.remove();
+
+            const cleanName = ownerName.replace('Divisi ', '').replace('Sub Divisi ', '');
+            const allInits = typeof allInitiatives !== 'undefined' ? allInitiatives : JSON.parse(localStorage.getItem('initiatives') || '[]');
+            const ownerInits = allInits.filter(i => i.owner === ownerName);
+
+            // Calculate total budget
+            const totalBudget = ownerInits.reduce((sum, i) => sum + (parseInt(i.budget) || 0), 0);
+            const totalCost = ownerInits.reduce((sum, i) => sum + (parseInt(i.actualCost) || 0), 0);
+
+            let itemsHtml = '';
+            if (ownerInits.length === 0) {
+                itemsHtml = '<div style="text-align: center; padding: 30px; color: #888;">Tidak ada data budget.</div>';
+            } else {
+                ownerInits.forEach((init) => {
+                    const b = parseInt(init.budget) || 0;
+                    const c = parseInt(init.actualCost) || 0;
+                    const usage = b > 0 ? Math.round((c / b) * 100) : 0;
+                    let usageColor = '#4ade80';
+                    if (usage > 100) usageColor = '#f87171';
+                    else if (usage > 80) usageColor = '#fbbf24';
+
+                    itemsHtml += `
+                        <div style="padding: 15px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(167, 139, 250, 0.2); margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                <div style="font-size: 14px; font-weight: 600; color: white; flex: 1;">${init.name}</div>
+                                <div style="font-size: 11px; padding: 3px 8px; border-radius: 4px; background: ${usageColor}22; color: ${usageColor}; font-weight: 600;">${usage}% Used</div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 11px; color: #888;">
+                                <span>Budget: Rp ${b.toLocaleString('id-ID')}</span>
+                                <span>Real: Rp ${c.toLocaleString('id-ID')}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            const modalHtml = `
+                <div id="dynamicBudgetModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 99999; display: flex; justify-content: center; align-items: center; padding: 20px;">
+                    <div style="background: #1a1a2e; border-radius: 16px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+                        <div style="padding: 20px;">
+                            <div style="margin-bottom: 20px;">
+                                <button onclick="document.getElementById('dynamicBudgetModal').remove()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                                    ← Tutup
+                                </button>
+                            </div>
+                            <div style="font-size: 16px; font-weight: 700; color: white; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                                💰 Budget Usage - ${cleanName}
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                                <div style="background: rgba(167, 139, 250, 0.1); padding: 15px; border-radius: 10px; border: 1px solid rgba(167, 139, 250, 0.2); text-align: center;">
+                                    <div style="font-size: 12px; color: #888; margin-bottom: 5px;">Total Budget</div>
+                                    <div style="font-size: 18px; font-weight: bold; color: white;">Rp ${totalBudget.toLocaleString('id-ID')}</div>
+                                </div>
+                                <div style="background: rgba(167, 139, 250, 0.1); padding: 15px; border-radius: 10px; border: 1px solid rgba(167, 139, 250, 0.2); text-align: center;">
+                                    <div style="font-size: 12px; color: #888; margin-bottom: 5px;">Total Realisasi</div>
+                                    <div style="font-size: 18px; font-weight: bold; color: white;">Rp ${totalCost.toLocaleString('id-ID')}</div>
+                                </div>
+                            </div>
+                            ${itemsHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            console.log('Budget modal created and displayed');
+        }
+
+        // Show Key Activities for specific owner (Dynamic Modal)
+        function showOwnerKeyActivities(ownerName) {
+            console.log('showOwnerKeyActivities called with:', ownerName);
+
+            // Remove existing modal if any
+            const existingModal = document.getElementById('dynamicKeyActivitiesModal');
+            if (existingModal) existingModal.remove();
+
+            const cleanName = ownerName.replace('Divisi ', '').replace('Sub Divisi ', '');
+            const allInits = typeof allInitiatives !== 'undefined' ? allInitiatives : JSON.parse(localStorage.getItem('initiatives') || '[]');
+            const ownerInits = allInits.filter(i => i.owner === ownerName);
+
+            // Collect all key activities
+            let allKeys = [];
+            ownerInits.forEach(init => {
+                if (init.subInitiatives && Array.isArray(init.subInitiatives)) {
+                    init.subInitiatives.forEach(sub => {
+                        allKeys.push({
+                            ...sub,
+                            initiativeName: init.name
+                        });
+                    });
+                }
+            });
+
+            let itemsHtml = '';
+            if (allKeys.length === 0) {
+                itemsHtml = '<div style="text-align: center; padding: 30px; color: #888;">Tidak ada key activities.</div>';
+            } else {
+                const completedCount = allKeys.filter(k => k.status === 'Done' || k.status === 'Completed' || k.progress == 100).length;
+                itemsHtml = `<div style="text-align: center; margin-bottom: 20px; font-size: 14px; color: #38bdf8; font-weight: 600;">${completedCount} dari ${allKeys.length} Key Activities Selesai</div>`;
+
+                allKeys.forEach((key) => {
+                    const progress = parseInt(key.progress) || 0;
+                    const isDone = key.status === 'Done' || key.status === 'Completed' || progress === 100;
+                    const isNotStarted = progress === 0 && (!key.status || key.status === 'Not Started');
+
+                    // Determine status color: Done=green, Not Started=gray, On Going=blue
+                    let statusColor, statusBg, statusText;
+                    if (isDone) {
+                        statusColor = '#4ade80';
+                        statusBg = 'rgba(74, 222, 128, 0.2)';
+                        statusText = 'Done';
+                    } else if (isNotStarted) {
+                        statusColor = '#94a3b8';
+                        statusBg = 'rgba(148, 163, 184, 0.2)';
+                        statusText = 'Not Started';
+                    } else {
+                        statusColor = '#38bdf8';
+                        statusBg = 'rgba(56, 189, 248, 0.2)';
+                        statusText = key.status || 'On Going';
+                    }
+
+                    itemsHtml += `
+                        <div style="padding: 15px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(56, 189, 248, 0.2); margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px;">
+                                <div style="font-size: 13px; font-weight: 500; color: white; flex: 1;">${key.name}</div>
+                                <div style="font-size: 10px; padding: 2px 8px; border-radius: 4px; background: ${statusBg}; color: ${statusColor}; font-weight: 600;">${statusText} ${progress > 0 && progress < 100 ? '(' + progress + '%)' : ''}</div>
+                            </div>
+                            <div style="font-size: 11px; color: #888; margin-bottom: 2px;">Initiative: ${key.initiativeName}</div>
+                            ${key.dueDate ? `<div style="font-size: 10px; color: #888;">Due: ${key.dueDate}</div>` : ''}
+                        </div>
+                    `;
+                });
+            }
+
+            const modalHtml = `
+                <div id="dynamicKeyActivitiesModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 99999; display: flex; justify-content: center; align-items: center; padding: 20px;">
+                    <div style="background: #1a1a2e; border-radius: 16px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+                        <div style="padding: 20px;">
+                            <div style="margin-bottom: 20px;">
+                                <button onclick="document.getElementById('dynamicKeyActivitiesModal').remove()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                                    ← Tutup
+                                </button>
+                            </div>
+                            <div style="font-size: 16px; font-weight: 700; color: white; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                                ✅ Key Activities - ${cleanName}
+                            </div>
+                            ${itemsHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            console.log('Key Activities modal created and displayed');
+        }
+
         // Close Top Performer Detail Modal
         function closeTopPerformerModal() {
             const modal = document.getElementById('topPerformerDetailModal');
@@ -4901,6 +5116,69 @@
                 closeTopPerformerModal();
             }
         });
+
+        // Show Completed Initiatives for specific owner (New)
+        function showOwnerCompletedInitiatives(ownerName) {
+            const content = document.getElementById('underPerformerModalContent'); // Re-use this modal
+            if (!content) return;
+            // Also need to open the modal container if we are coming from Top Performer
+            // But Top Performer uses its own modal... wait, if I click from Top Performer Modal, I need a place to show the list.
+            // Using 'underPerformerDetailModal' as a generic "List View" modal seems fine, BUT currently Top Performer Modal is OPEN.
+            // If I open Under Performer Modal, it might stack or replace.
+            // Let's assume we close Top Modal or overlay.
+            // Be careful: Top Performer Modal ID = 'topPerformerDetailModal'
+            // Under Performer Modal ID = 'underPerformerDetailModal'
+
+            // If I use 'underPerformerDetailModal', I should close 'topPerformerDetailModal' first? 
+            // Or maybe I can render the list inside the 'topPerformerDetailModal' by replacing content?
+            // "Kembali" button logic would be tricky if I replace content.
+            // Better to use the generic 'underPerformerDetailModal' which seems designed for lists, and close the Top one?
+            // Or just stack them? HTML modals usually stack if z-index is right. 
+            // Let's try opening the generic one.
+
+            const modal = document.getElementById('underPerformerDetailModal');
+
+            const cleanName = ownerName.replace('Divisi ', '').replace('Sub Divisi ', '');
+            const allInits = typeof allInitiatives !== 'undefined' ? allInitiatives : JSON.parse(localStorage.getItem('initiatives') || '[]');
+            const completedInits = allInits.filter(i => i.owner === ownerName && i.status === 'Done');
+
+            let html = `
+                <div style="margin-bottom: 20px;">
+                    <button onclick="document.getElementById('underPerformerDetailModal').style.display='none'" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                        <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
+                        Tutup
+                    </button>
+                </div>
+                <div style="font-size: 16px; font-weight: 700; color: white; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <i data-lucide="check-circle" style="width: 20px; height: 20px; color: #4ade80;"></i>
+                    Inisiatif Selesai - ${cleanName}
+                </div>
+            `;
+
+            if (completedInits.length === 0) {
+                html += '<div style="text-align: center; padding: 30px; color: var(--text-muted);">Tidak ada inisiatif selesai.</div>';
+            } else {
+                completedInits.forEach((init) => {
+                    html += `
+                        <div onclick="window.location.href='projects.html?search=${encodeURIComponent(init.name)}'" style="padding: 15px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(74, 222, 128, 0.2); margin-bottom: 10px; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(74, 222, 128, 0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                <div style="font-size: 14px; font-weight: 600; color: white; flex: 1;">${init.name}</div>
+                                <div style="font-size: 11px; padding: 3px 8px; border-radius: 4px; background: rgba(74, 222, 128, 0.2); color: #4ade80; font-weight: 600;">Done</div>
+                            </div>
+                            <div style="display: flex; gap: 15px; font-size: 11px; color: var(--text-muted);">
+                                <span><strong>Due:</strong> ${init.dueDate || '-'}</span>
+                                <span><strong>Progress:</strong> ${init.progress || 0}%</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            content.innerHTML = html;
+            modal.style.zIndex = '20005'; // Ensure it's above Top Performer modal
+            modal.style.display = 'flex';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
 
         // Show Overdue Initiatives for specific owner
         function showOwnerOverdueInitiatives(ownerName, overdueList) {
@@ -4997,107 +5275,6 @@
                         </div>
                     `;
                 });
-            }
-
-            content.innerHTML = html;
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-        }
-
-        // Show Budget Details for specific owner
-        function showOwnerBudgetDetails(ownerName) {
-            const content = document.getElementById('underPerformerModalContent');
-            if (!content) return;
-
-            const cleanName = ownerName.replace('Divisi ', '').replace('Sub Divisi ', '');
-            const allInits = typeof allInitiatives !== 'undefined' ? allInitiatives : JSON.parse(localStorage.getItem('initiatives') || '[]');
-            const ownerInits = allInits.filter(i => i.owner === ownerName);
-
-            let html = `
-                <div style="margin-bottom: 20px;">
-                    <button onclick="showUnderPerformerDetailModal('${ownerName.replace(/'/g, "\\'")}')" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px;">
-                        <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
-                        Kembali
-                    </button>
-                </div>
-                <div style="font-size: 16px; font-weight: 700; color: white; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-                    <i data-lucide="wallet" style="width: 20px; height: 20px; color: #a78bfa;"></i>
-                    Detail Budget - ${cleanName}
-                </div>
-            `;
-
-            if (ownerInits.length === 0) {
-                html += '<div style="text-align: center; padding: 30px; color: var(--text-muted);">Tidak ada data budget.</div>';
-            } else {
-                ownerInits.forEach((init) => {
-                    const budget = parseInt(init.budget) || 0;
-                    const actual = parseInt(init.actualCost) || 0;
-                    const usage = budget > 0 ? Math.round((actual / budget) * 100) : 0;
-                    const usageColor = usage > 100 ? '#ef4444' : usage > 80 ? '#fbbf24' : '#4ade80';
-                    html += `
-                        <div onclick="window.location.href='projects.html?search=${encodeURIComponent(init.name)}'" style="padding: 15px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(167, 139, 250, 0.2); margin-bottom: 10px; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(167, 139, 250, 0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                                <div style="font-size: 14px; font-weight: 600; color: white; flex: 1;">${init.name}</div>
-                                <div style="font-size: 11px; padding: 3px 8px; border-radius: 4px; background: rgba(167, 139, 250, 0.2); color: ${usageColor}; font-weight: 600;">${usage}%</div>
-                            </div>
-                            <div style="display: flex; gap: 15px; font-size: 11px; color: var(--text-muted);">
-                                <span><strong>Budget:</strong> Rp ${(budget / 1000000).toFixed(0)}jt</span>
-                                <span><strong>Terpakai:</strong> Rp ${(actual / 1000000).toFixed(0)}jt</span>
-                                <span><strong>Status:</strong> ${init.status}</span>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-
-            content.innerHTML = html;
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-        }
-
-        // Show Key Activities for specific owner
-        function showOwnerKeyActivities(ownerName) {
-            const content = document.getElementById('underPerformerModalContent');
-            if (!content) return;
-
-            const cleanName = ownerName.replace('Divisi ', '').replace('Sub Divisi ', '');
-            const allInits = typeof allInitiatives !== 'undefined' ? allInitiatives : JSON.parse(localStorage.getItem('initiatives') || '[]');
-            const ownerInits = allInits.filter(i => i.owner === ownerName);
-
-            let html = `
-                <div style="margin-bottom: 20px;">
-                    <button onclick="showUnderPerformerDetailModal('${ownerName.replace(/'/g, "\\'")}')" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px;">
-                        <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
-                        Kembali
-                    </button>
-                </div>
-                <div style="font-size: 16px; font-weight: 700; color: white; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-                    <i data-lucide="list-checks" style="width: 20px; height: 20px; color: #38bdf8;"></i>
-                    Key Activities - ${cleanName}
-                </div>
-            `;
-
-            let hasActivities = false;
-            ownerInits.forEach((init) => {
-                if (init.subInitiatives && init.subInitiatives.length > 0) {
-                    hasActivities = true;
-                    html += `<div style="font-size: 13px; font-weight: 600; color: #38bdf8; margin-bottom: 10px; margin-top: 15px;">${init.name}</div>`;
-                    init.subInitiatives.forEach((sub) => {
-                        const statusColor = sub.status === 'Done' ? '#4ade80' : sub.status === 'On Going' ? '#3b82f6' : '#94a3b8';
-                        const statusBg = sub.status === 'Done' ? 'rgba(74, 222, 128, 0.2)' : sub.status === 'On Going' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(148, 163, 184, 0.2)';
-                        html += `
-                            <div style="padding: 12px 15px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.15); margin-bottom: 8px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div style="font-size: 13px; color: white; flex: 1;">${sub.name}</div>
-                                    <div style="font-size: 10px; padding: 2px 8px; border-radius: 4px; background: ${statusBg}; color: ${statusColor}; font-weight: 600;">${sub.status || 'Not Started'}</div>
-                                </div>
-                                ${sub.dueDate ? `<div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Due: ${sub.dueDate}</div>` : ''}
-                            </div>
-                        `;
-                    });
-                }
-            });
-
-            if (!hasActivities) {
-                html += '<div style="text-align: center; padding: 30px; color: var(--text-muted);">Tidak ada key activities.</div>';
             }
 
             content.innerHTML = html;
@@ -6019,6 +6196,35 @@
             }
         });
     </script>
+
+    <!-- Top Performer Detail Modal -->
+    <div id="topPerformerDetailModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 10000; justify-content: center; align-items: center; padding: 20px;">
+        <div
+            style="background: var(--bg-card, #1a1a2e); border-radius: 16px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+            <div
+                style="padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                <div id="topPerformerModalTitle"
+                    style="font-size: 18px; font-weight: 700; color: white; display: flex; align-items: center; gap: 10px;">
+                    Top Performer Details</div>
+                <button onclick="closeTopPerformerModal()"
+                    style="background: rgba(255,255,255,0.1); border: none; width: 32px; height: 32px; border-radius: 8px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+                </button>
+            </div>
+            <div id="topPerformerModalContent" style="padding: 20px;"></div>
+        </div>
+    </div>
+
+    <!-- Under Performer / Detail Modal (Reused for various detail views) -->
+    <div id="underPerformerDetailModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 20005; justify-content: center; align-items: center; padding: 20px;">
+        <div
+            style="background: var(--bg-card, #1a1a2e); border-radius: 16px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+            <div id="underPerformerModalContent" style="padding: 20px;"></div>
+        </div>
+    </div>
+
 </body>
 
 </html>
