@@ -22,9 +22,9 @@ try {
         const isAdminUser = currentUserObj && (currentUserObj.role === 'admin' || currentUserObj.role === 'administrator');
 
         if (!isAdminUser && allInitiatives.length < MOCK_INITIATIVES.length) {
-            console.log('🔄 Detected low data count for NON-ADMIN, forcing restore...');
-            allInitiatives = MOCK_INITIATIVES;
-            localStorage.setItem('initiatives', JSON.stringify(allInitiatives));
+            console.log('🔄 Detected low data count for NON-ADMIN, BUT auto-restore is DISABLED to prevent data loss.');
+            // allInitiatives = MOCK_INITIATIVES;
+            // localStorage.setItem('initiatives', JSON.stringify(allInitiatives));
         }
         else if (allInitiatives.some(i => i.id === 105 && i.entity !== 'ptpn3')) {
             console.log('🔄 Detected incorrect entity assignment, forcing partial restore...');

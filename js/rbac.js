@@ -379,6 +379,12 @@ class RBAC {
 
         localStorage.setItem('initiatives', JSON.stringify(initiatives));
 
+        // SYNC TO CLOUD
+        if (window.dataService) {
+            console.log('☁️ Syncing approval to cloud...');
+            window.dataService.saveInitiative(initiative);
+        }
+
         // Create notification for initiative creator
         this.createNotification({
             username: initiative.createdBy,
@@ -432,6 +438,12 @@ class RBAC {
         }
 
         localStorage.setItem('initiatives', JSON.stringify(initiatives));
+
+        // SYNC TO CLOUD
+        if (window.dataService) {
+            console.log('☁️ Syncing rejection to cloud...');
+            window.dataService.saveInitiative(initiative);
+        }
 
         // Create notification for initiative creator
         this.createNotification({
